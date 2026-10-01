@@ -1,0 +1,2101 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>UmbrellaCards — Lyric Cards для TikTok и Reels</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  // Конфигурация дизайн-системы Tailwind для темной неоновой темы
+  tailwind.config = {
+    theme: {
+      extend: {
+        fontFamily: {
+          display: ['"Space Grotesk"', 'Inter', 'system-ui', 'sans-serif'],
+          body: ['Inter', 'system-ui', 'sans-serif'],
+        },
+        colors: {
+          void: '#05060f',
+          panel: '#0b0e1d',
+          neon: '#00f0ff',
+          magenta: '#ff00e5',
+          lime: '#a3ff00',
+        },
+        boxShadow: {
+          glow: '0 0 40px rgba(0, 240, 255, 0.25)',
+          glowPink: '0 0 40px rgba(255, 0, 229, 0.25)',
+        }
+      }
+    }
+  }
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<!-- Новый движок Lyric Cards 9:16 -->
+<script src="visualizer.js"></script>
+<style>
+  /* Базовые стили страницы и фона */
+  html, body {
+    background: #05060f;
+    color: #e8ecff;
+    font-family: Inter, system-ui, sans-serif;
+    min-height: 100vh;
+  }
+  .font-display { font-family: "Space Grotesk", Inter, sans-serif; }
+
+  /* Анимированный фон с сеткой и светящимися пятнами */
+  .bg-grid {
+    background-image:
+      linear-gradient(rgba(255,255,255,0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.04) 1px, transparent 1px);
+    background-size: 48px 48px;
+    mask-image: radial-gradient(ellipse 90% 80% at 50% 20%, black 40%, transparent 100%);
+  }
+  .orb {
+    position: absolute;
+    border-radius: 9999px;
+    filter: blur(90px);
+    opacity: 0.45;
+    pointer-events: none;
+  }
+  @keyframes floatSlow {
+    0%, 100% { transform: translate(0,0) scale(1); }
+    50% { transform: translate(30px,-30px) scale(1.08); }
+  }
+  .animate-float { animation: floatSlow 9s ease-in-out infinite; }
+
+  /* Стилизация зоны перетаскивания файлов */
+  .dropzone {
+    border: 1.5px dashed rgba(255,255,255,0.18);
+    transition: all .25s ease;
+  }
+  .dropzone.dragover {
+    border-color: #00f0ff;
+    background: rgba(0,240,255,0.07);
+    box-shadow: 0 0 0 1px rgba(0,240,255,0.4), 0 0 40px rgba(0,240,255,0.2) inset;
+    transform: scale(1.01);
+  }
+
+  /* Кастомные слайдеры в панели настроек */
+  input[type="range"] {
+    -webkit-appearance: none;
+    appearance: none;
+    height: 6px;
+    border-radius: 9999px;
+    background: linear-gradient(90deg, #00f0ff, #ff00e5);
+    outline: none;
+    cursor: pointer;
+  }
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 18px;
+    height: 18px;
+    border-radius: 9999px;
+    background: #fff;
+    border: 3px solid #0b0e1d;
+    box-shadow: 0 0 0 2px #00f0ff, 0 0 16px rgba(0,240,255,0.9);
+    cursor: grab;
+  }
+  input[type="range"]::-moz-range-thumb {
+    width: 18px;
+    height: 18px;
+    border-radius: 9999px;
+    background: #fff;
+    border: 3px solid #0b0e1d;
+    box-shadow: 0 0 0 2px #00f0ff, 0 0 16px rgba(0,240,255,0.9);
+    cursor: grab;
+  }
+  input[type="range"].seek {
+    background: rgba(255,255,255,0.12);
+  }
+
+  /* Карточки выбора режима визуализации */
+  .mode-card {
+    border: 1px solid rgba(255,255,255,0.08);
+    background: rgba(255,255,255,0.03);
+    transition: all .2s ease;
+    cursor: pointer;
+  }
+  .mode-card:hover {
+    border-color: rgba(0,240,255,0.4);
+    background: rgba(0,240,255,0.06);
+  }
+  .mode-card.active {
+    border-color: #00f0ff;
+    background: linear-gradient(180deg, rgba(0,240,255,0.14), rgba(255,0,229,0.10));
+    box-shadow: 0 0 24px rgba(0,240,255,0.22);
+  }
+
+  /* Кнопки выбора цветовой схемы */
+  .scheme-btn {
+    border: 1px solid rgba(255,255,255,0.10);
+    transition: all .2s ease;
+  }
+  .scheme-btn.active {
+    border-color: #fff;
+    box-shadow: 0 0 18px rgba(255,255,255,0.25);
+    transform: translateY(-1px);
+  }
+
+  /* Свечение вокруг холста */
+  .canvas-shell {
+    box-shadow:
+      0 0 0 1px rgba(255,255,255,0.08),
+      0 0 60px rgba(0,240,255,0.12),
+      0 30px 80px rgba(0,0,0,0.6);
+  }
+
+  /* Тонкий скроллбар для панели */
+  ::-webkit-scrollbar { width: 8px; height: 8px; }
+  ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 999px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+
+  /* Мигание индикатора REC для VHS стиля */
+  @keyframes blink { 0%, 60% { opacity: 1; } 61%, 100% { opacity: 0.15; } }
+  .blink { animation: blink 1.1s steps(1) infinite; }
+
+  /* Плавное появление экранов */
+  .fade-in { animation: fadeIn .5s ease both; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+
+  /* === Монетизация: неоновая кнопка Pro === */
+  .btn-pro {
+    background: linear-gradient(90deg,#00f0ff,#7c3aed 50%,#ff00e5);
+    box-shadow: 0 0 24px rgba(0,240,255,.45), 0 0 48px rgba(255,0,229,.25);
+    transition: filter .2s ease, transform .15s ease;
+  }
+  .btn-pro:hover { filter: brightness(1.12); transform: translateY(-1px); }
+  .btn-pro:active { transform: scale(0.98); }
+
+  /* === Модальное окно тарифов === */
+  #paywallModal { backdrop-filter: blur(8px); }
+  .pay-card {
+    border: 1px solid rgba(255,255,255,0.10);
+    background: rgba(255,255,255,0.04);
+    transition: all .2s ease;
+  }
+  .pay-card:hover { border-color: rgba(0,240,255,0.5); transform: translateY(-2px); }
+  .pay-card.featured {
+    border-color: #00f0ff;
+    background: linear-gradient(180deg, rgba(0,240,255,0.12), rgba(255,0,229,0.10));
+    box-shadow: 0 0 30px rgba(0,240,255,0.25);
+  }
+  /* Заблокированные Pro-пресеты */
+  .mode-card.locked { opacity: 0.75; position: relative; }
+  .mode-card.locked:hover { border-color: rgba(255,200,0,0.5); background: rgba(255,200,0,0.06); }
+  .pro-badge {
+    font-size: 10px; font-weight: 800; letter-spacing: 0.14em;
+    padding: 2px 8px; border-radius: 999px;
+    background: linear-gradient(90deg,#ffea00,#ff8a00);
+    color: #000;
+  }
+</style>
+</head>
+<body class="relative overflow-x-hidden">
+
+<!-- Декоративный фон: сетка и цветные светящиеся пятна -->
+<div class="fixed inset-0 pointer-events-none">
+  <div class="absolute inset-0 bg-grid"></div>
+  <div class="orb animate-float w-[520px] h-[520px] left-[-120px] top-[-120px]" style="background:#00f0ff33"></div>
+  <div class="orb animate-float w-[460px] h-[460px] right-[-100px] top-[20%]" style="background:#ff00e533; animation-delay:-3s"></div>
+  <div class="orb w-[600px] h-[400px] left-[30%] bottom-[-160px]" style="background:#7c3aed33"></div>
+  <div class="absolute inset-0" style="background:radial-gradient(ellipse 80% 60% at 50% 0%, transparent, #05060f 85%)"></div>
+</div>
+
+<!-- Шапка сервиса -->
+<header class="relative z-10 max-w-[1400px] mx-auto px-5 md:px-8 pt-6 flex items-center justify-between gap-3">
+  <div class="flex items-center gap-3">
+    <div class="w-10 h-10 rounded-2xl grid place-items-center font-display font-bold text-black text-lg" style="background:linear-gradient(135deg,#00f0ff,#ff00e5); box-shadow:0 0 24px rgba(0,240,255,.5)">♪</div>
+    <div>
+      <div class="font-display font-700 font-bold tracking-tight text-lg leading-none">UmbrellaCards</div>
+      <div class="text-[12px] text-white/50 tracking-[0.22em] uppercase">Lyric Cards Studio</div>
+    </div>
+    <span id="proBadge" class="hidden text-[11px] font-bold px-3 py-1 rounded-full text-black" style="background:linear-gradient(90deg,#ffea00,#ff8a00); box-shadow:0 0 16px rgba(255,234,0,.5)">★ PRO</span>
+  </div>
+  <div class="flex items-center gap-3">
+    <div class="hidden md:flex items-center gap-2 text-[13px] text-white/60 mr-2">
+      <span class="w-2 h-2 rounded-full bg-emerald-400 inline-block" style="box-shadow:0 0 12px #34d399"></span>
+      100% локально · без загрузки на сервер
+    </div>
+    <!-- Дорогая неоновая кнопка покупки Pro -->
+    <button id="buyProHeaderBtn" class="btn-pro rounded-xl px-5 py-2.5 font-display font-bold text-black text-sm">⚡ Купить Pro-доступ</button>
+  </div>
+</header>
+
+<main class="relative z-10 max-w-[1400px] mx-auto px-5 md:px-8 pb-16">
+
+  <!-- ============================================================ -->
+  <!-- ЭКРАН 1: Загрузка трека -->
+  <!-- ============================================================ -->
+  <section id="screen-upload" class="fade-in mt-10 md:mt-14 grid lg:grid-cols-[1.1fr_0.9fr] gap-8 items-stretch">
+    <!-- Левая колонка: заголовок и форма загрузки -->
+    <div class="rounded-3xl p-8 md:p-10 bg-white/[0.03] border border-white/10 backdrop-blur-xl">
+      <div class="inline-flex items-center gap-2 text-[12px] tracking-[0.2em] uppercase text-cyan-300/90 bg-cyan-400/10 border border-cyan-300/20 rounded-full px-4 py-1.5">
+        ✦ Аналог Vizualizer · MusicVid — бесплатно
+      </div>
+      <h1 class="font-display font-bold tracking-tight mt-5 text-4xl md:text-[52px] leading-[1.02]">
+        Преврати трек<br>
+        <span class="text-transparent bg-clip-text" style="background-image:linear-gradient(90deg,#00f0ff,#ff00e5,#ffea00)">в Lyric Card 9:16</span>
+      </h1>
+      <p class="mt-4 text-white/60 leading-relaxed max-w-[520px]">
+        Загрузи трек, фото артиста и обложку, впиши цитату — получишь вертикальное видео для TikTok и Reels. Карточка пульсирует от басов, пылинки летят от средних и высоких.
+      </p>
+
+      <!-- Зона Drag-and-Drop -->
+      <div id="dropzone" class="dropzone mt-7 rounded-2xl p-8 text-center bg-black/30 cursor-pointer select-none">
+        <div class="mx-auto w-14 h-14 rounded-2xl grid place-items-center text-2xl" style="background:linear-gradient(135deg,rgba(0,240,255,.2),rgba(255,0,229,.2)); border:1px solid rgba(255,255,255,.12)">🎧</div>
+        <div class="mt-4 font-display font-semibold text-lg">Перетащи сюда .mp3 или .wav</div>
+        <div class="text-white/50 text-sm mt-1">или <button id="browseBtn" class="text-cyan-300 underline underline-offset-4 hover:text-white transition">выбери файл вручную</button></div>
+        <div id="fileNamePreview" class="hidden mt-4 inline-flex items-center gap-2 text-sm bg-emerald-400/10 border border-emerald-300/30 text-emerald-200 rounded-full px-4 py-1.5"></div>
+        <input id="fileInput" type="file" accept=".mp3,.wav,audio/mpeg,audio/wav,audio/*" class="hidden" />
+      </div>
+
+      <!-- Ввод ссылки на аудио -->
+      <div class="mt-5">
+        <label class="text-[13px] uppercase tracking-[0.18em] text-white/50">Или вставь ссылку на аудио</label>
+        <div class="mt-2 flex gap-2">
+          <input id="urlInput" type="url" placeholder="https://example.com/track.mp3" class="flex-1 rounded-xl bg-black/40 border border-white/10 px-4 py-3 text-sm placeholder:text-white/30 focus:outline-none focus:border-cyan-300/60 focus:ring-2 focus:ring-cyan-400/20 transition" />
+          <button id="useUrlBtn" class="rounded-xl px-4 py-3 text-sm font-semibold bg-white/10 border border-white/15 hover:bg-white/20 transition">OK</button>
+        </div>
+        <p class="text-[12px] text-white/40 mt-2 leading-relaxed">Подсказка: сервер со ссылкой должен разрешать CORS, иначе браузер заглушит анализ частот. Файлы с компьютера всегда работают идеально.</p>
+      </div>
+
+      <!-- Кнопка старта -->
+      <div class="mt-7 flex flex-col sm:flex-row gap-3">
+        <button id="startBtn" class="flex-1 rounded-2xl font-display font-bold text-black text-[17px] py-4 px-6 transition hover:brightness-110 active:scale-[0.99]" style="background:linear-gradient(90deg,#00f0ff,#7df9ff 40%,#ff00e5); box-shadow:0 0 30px rgba(0,240,255,.35)">
+          ▶ &nbsp;Начать визуализацию
+        </button>
+      </div>
+
+      <!-- Lyric Card: фото, обложка и тексты -->
+      <div class="mt-7 rounded-2xl bg-black/30 border border-white/10 p-5">
+        <div class="text-[12px] uppercase tracking-[0.18em] text-white/45">Оформление Lyric Card</div>
+        <div class="grid sm:grid-cols-2 gap-3 mt-3">
+          <label class="rounded-xl bg-white/5 border border-white/10 px-4 py-3 text-sm cursor-pointer hover:bg-white/10 transition block">
+            🖼 Фото артиста (фон)
+            <input id="bgInput" type="file" accept="image/*" class="hidden" />
+            <span id="bgName" class="block text-[12px] text-white/40 mt-1">Не выбрано — будет градиент</span>
+          </label>
+          <label class="rounded-xl bg-white/5 border border-white/10 px-4 py-3 text-sm cursor-pointer hover:bg-white/10 transition block">
+            💿 Обложка трека
+            <input id="coverInput" type="file" accept="image/*" class="hidden" />
+            <span id="coverName" class="block text-[12px] text-white/40 mt-1">Не выбрано — будет неон</span>
+          </label>
+        </div>
+        <div class="grid sm:grid-cols-2 gap-3 mt-3">
+          <input id="songTitleInput" type="text" placeholder="Название песни" class="rounded-xl bg-black/40 border border-white/10 px-4 py-3 text-sm placeholder:text-white/30 focus:outline-none focus:border-cyan-300/60 transition" />
+          <input id="songArtistInput" type="text" placeholder="Имя артиста" class="rounded-xl bg-black/40 border border-white/10 px-4 py-3 text-sm placeholder:text-white/30 focus:outline-none focus:border-cyan-300/60 transition" />
+        </div>
+        <input id="songHandleInput" type="text" placeholder="TikTok-ник, например @gerlet" class="mt-3 w-full rounded-xl bg-black/40 border border-white/10 px-4 py-3 text-sm placeholder:text-white/30 focus:outline-none focus:border-cyan-300/60 transition" />
+        <textarea id="songLyricInput" rows="3" placeholder="Отрывок из песни — главная цитата" class="mt-3 w-full rounded-xl bg-black/40 border border-white/10 px-4 py-3 text-sm placeholder:text-white/30 focus:outline-none focus:border-cyan-300/60 transition">Главный отрывок песни,&#10;который хочется запостить</textarea>
+        <p class="text-[11px] text-white/35 mt-2">Free: фото фона ужимается до 720p. Pro: полное разрешение фото + 3 премиум-темы.</p>
+      </div>
+      <div id="uploadError" class="hidden mt-3 text-sm text-rose-300 bg-rose-500/10 border border-rose-400/30 rounded-xl px-4 py-2.5"></div>
+
+      <!-- Мини-преимущества -->
+      <div class="mt-6 flex flex-wrap gap-2 text-[12px] text-white/55">
+        <span class="px-3 py-1.5 rounded-full bg-white/5 border border-white/10">⚡ 60 FPS Canvas 2D</span>
+        <span class="px-3 py-1.5 rounded-full bg-white/5 border border-white/10">🎛️ Живой спектр: бас / средние / верха</span>
+        <span class="px-3 py-1.5 rounded-full bg-white/5 border border-white/10">🔒 Файл не покидает устройство</span>
+      </div>
+    </div>
+
+    <!-- Правая колонка: превью режимов -->
+    <div class="flex flex-col gap-4">
+      <div class="rounded-3xl overflow-hidden border border-white/10 bg-panel/80 backdrop-blur-xl">
+        <div class="p-5 flex items-center justify-between">
+          <div class="font-display font-semibold">Три движка рендера</div>
+          <div class="text-[12px] text-white/40 tracking-widest uppercase">Live preview</div>
+        </div>
+        <div class="grid grid-cols-3 gap-3 px-5 pb-2">
+          <div class="rounded-2xl p-4 text-center bg-black/40 border border-cyan-300/20">
+            <div class="text-2xl">◎</div>
+            <div class="mt-2 font-display text-sm font-semibold text-cyan-200">Neon Circle</div>
+            <div class="text-[11px] text-white/45 mt-1 leading-snug">Винил + радиальный спектр + частицы</div>
+          </div>
+          <div class="rounded-2xl p-4 text-center bg-black/40 border border-fuchsia-300/20">
+            <div class="text-2xl">𝄙</div>
+            <div class="mt-2 font-display text-sm font-semibold text-fuchsia-200">Waveform Bars</div>
+            <div class="text-[11px] text-white/45 mt-1 leading-snug">Плавные неоновые полосы</div>
+          </div>
+          <div class="rounded-2xl p-4 text-center bg-black/40 border border-amber-200/20">
+            <div class="text-2xl">📼</div>
+            <div class="mt-2 font-display text-sm font-semibold text-amber-100">Retro VHS</div>
+            <div class="text-[11px] text-white/45 mt-1 leading-snug">Глитч, шум и сканлайны</div>
+          </div>
+        </div>
+        <!-- Декоративная анимированная полоса-заглушка -->
+        <div class="m-5 rounded-2xl bg-black/60 border border-white/10 p-5 overflow-hidden relative">
+          <div class="flex items-end justify-center gap-[5px] h-[110px]" id="fakeBars"></div>
+          <div class="mt-3 flex items-center justify-between text-[11px] text-white/40">
+            <span class="blink text-rose-300 font-semibold">● REC</span>
+            <span>SP 0:00:00 · HI-FI STEREO</span>
+          </div>
+          <div class="absolute inset-0 pointer-events-none" style="background:repeating-linear-gradient(0deg, transparent 0 3px, rgba(0,0,0,.35) 3px 4px)"></div>
+        </div>
+      </div>
+      <div class="rounded-3xl p-5 border border-white/10 bg-white/[0.03] text-sm text-white/55 leading-relaxed">
+        <span class="text-white font-semibold">Как это работает:</span> мы создаём AudioContext и AnalyserNode, делим спектр на басы, средние и высокие частоты через <code class="text-cyan-200 bg-cyan-400/10 px-1.5 py-0.5 rounded">getByteFrequencyData</code>, сглаживаем значения, чтобы движение было органичным, и рисуем всё в <code class="text-fuchsia-200 bg-fuchsia-400/10 px-1.5 py-0.5 rounded">requestAnimationFrame</code>.
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <!-- ЭКРАН 2: Плеер и кастомизация -->
+  <!-- ============================================================ -->
+  <section id="screen-player" class="hidden mt-8">
+    <div class="grid xl:grid-cols-[420px_1fr_340px] gap-5 items-start justify-center">
+
+      <!-- Центральная часть: вертикальный холст 9:16 и транспорт -->
+      <div class="rounded-3xl bg-white/[0.03] border border-white/10 backdrop-blur-xl p-4 md:p-6 order-first xl:order-none xl:col-start-2">
+        <!-- Верхняя строка: название трека и кнопки -->
+        <div class="flex flex-wrap items-center gap-3 justify-between">
+          <div class="flex items-center gap-3 min-w-0">
+            <div id="vinylMini" class="w-11 h-11 rounded-full shrink-0 grid place-items-center text-[10px] font-bold" style="background:conic-gradient(from 0deg,#00f0ff,#ff00e5,#ffea00,#00f0ff); box-shadow:0 0 18px rgba(0,240,255,.4)">
+              <span class="w-7 h-7 rounded-full bg-[#0b0e1d] grid place-items-center text-white">♪</span>
+            </div>
+            <div class="min-w-0">
+              <div id="trackTitle" class="font-display font-semibold truncate max-w-[320px] md:max-w-[480px]">Без названия</div>
+              <div id="trackSub" class="text-[12px] text-white/45 flex items-center gap-2">
+                <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 inline-block"></span>
+                <span id="engineLabel">Neon Circle · Неон · 60 FPS</span>
+              </div>
+            </div>
+          </div>
+          <div class="flex items-center gap-2">
+            <button id="backBtn" class="text-[13px] px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 transition">← Новый трек</button>
+            <button id="fullscreenBtn" class="text-[13px] px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 transition">⛶ Во весь экран</button>
+          </div>
+        </div>
+
+        <!-- Холст визуализации 9:16 -->
+        <div id="canvasWrap" class="canvas-shell relative mt-4 rounded-2xl overflow-hidden bg-black mx-auto w-full max-w-[420px]" style="aspect-ratio:9/16; max-height:72vh">
+          <canvas id="stage" class="absolute inset-0 w-full h-full block"></canvas>
+          <!-- Подсказка при паузе -->
+          <div id="pausedOverlay" class="hidden absolute inset-0 place-items-center bg-black/45 backdrop-blur-[2px]">
+            <div class="text-center">
+              <div class="mx-auto w-16 h-16 rounded-full grid place-items-center text-2xl text-black font-bold" style="background:linear-gradient(135deg,#00f0ff,#ff00e5)">▶</div>
+              <div class="mt-3 font-display font-semibold tracking-wide">Пауза</div>
+              <div class="text-white/50 text-sm">Нажми Play, чтобы продолжить</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Транспорт: Play, seek, время, громкость -->
+        <div class="mt-4 rounded-2xl bg-black/40 border border-white/10 px-4 py-4">
+          <div class="flex items-center gap-3">
+            <button id="playBtn" class="w-12 h-12 rounded-full grid place-items-center text-black text-xl font-bold shrink-0 hover:brightness-110 active:scale-95 transition" style="background:linear-gradient(135deg,#00f0ff,#ff00e5); box-shadow:0 0 22px rgba(255,0,229,.45)">⏸</button>
+            <div id="timeCurrent" class="text-[13px] font-mono text-white/70 w-[48px]">0:00</div>
+            <input id="seekBar" type="range" class="seek flex-1" min="0" max="1000" value="0" />
+            <div id="timeTotal" class="text-[13px] font-mono text-white/40 w-[48px] text-right">0:00</div>
+          </div>
+          <div class="mt-3 flex flex-wrap items-center gap-4">
+            <label class="flex items-center gap-2 text-[13px] text-white/55">
+              🔊 <input id="volumeBar" type="range" min="0" max="100" value="90" class="w-[120px]" />
+            </label>
+            <div class="text-[12px] text-white/40">FFT 2048 · сглаживание включено · Canvas 2D</div>
+            <div class="ml-auto flex items-center gap-2 text-[12px]">
+              <span class="text-white/40">Статус:</span>
+              <span id="statusPill" class="px-3 py-1 rounded-full bg-emerald-400/10 border border-emerald-300/30 text-emerald-200 font-semibold">Играет</span>
+            </div>
+          </div>
+          <!-- Обрезка фрагмента: подгони песню под момент цитаты -->
+          <div class="mt-4 rounded-2xl bg-white/[0.03] border border-white/10 p-4">
+            <div class="flex items-center justify-between gap-2 flex-wrap">
+              <div class="text-[12px] uppercase tracking-[0.18em] text-white/45">✂ Фрагмент песни</div>
+              <label class="flex items-center gap-2 text-[12px] text-white/60 cursor-pointer">
+                <input id="loopFragment" type="checkbox" checked class="w-4 h-4 accent-cyan-400" /> Зациклить фрагмент
+              </label>
+            </div>
+            <div class="mt-3 grid grid-cols-[52px_1fr_52px] items-center gap-2 text-[12px] font-mono">
+              <span id="trimStartLabel" class="text-cyan-200">0:00</span>
+              <input id="trimStart" type="range" min="0" max="1000" value="0" class="w-full" />
+              <span class="text-white/35 text-right">старт</span>
+            </div>
+            <div class="mt-2 grid grid-cols-[52px_1fr_52px] items-center gap-2 text-[12px] font-mono">
+              <span id="trimEndLabel" class="text-fuchsia-200">0:30</span>
+              <input id="trimEnd" type="range" min="0" max="1000" value="1000" class="w-full" />
+              <span class="text-white/35 text-right">конец</span>
+            </div>
+            <div class="mt-2 flex items-center gap-2 flex-wrap">
+              <button id="previewFragmentBtn" class="text-[12px] px-3 py-1.5 rounded-lg bg-cyan-400/10 border border-cyan-300/30 text-cyan-200 hover:bg-cyan-400/20 transition">▶ Слушать фрагмент</button>
+              <span id="fragmentInfo" class="text-[11px] text-white/40">Фрагмент: 0:00 → 0:30 · экспорт запишет только его</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Правая часть: панель настроек дизайна -->
+      <aside class="rounded-3xl bg-white/[0.03] border border-white/10 backdrop-blur-xl p-5 md:p-6 xl:sticky xl:top-6">
+        <div class="flex items-center justify-between">
+          <h2 class="font-display font-bold text-lg">Дизайн</h2>
+          <span class="text-[11px] tracking-[0.2em] uppercase text-white/40">Control Deck</span>
+        </div>
+
+        <!-- Переключатель темы Lyric Card -->
+        <div class="mt-4">
+          <div class="text-[12px] uppercase tracking-[0.18em] text-white/45 mb-2">Тема карточки</div>
+          <div class="grid grid-cols-1 gap-2" id="themeGrid">
+            <div class="mode-card active rounded-xl px-4 py-3 flex items-center gap-3" data-mode="standard" data-theme="standard">
+              <span class="w-9 h-9 rounded-lg shrink-0" style="background:linear-gradient(135deg,#3a3d55,#14151f); border:1px solid rgba(255,255,255,.25)"></span>
+              <span><span class="font-display font-semibold block leading-none">Standard Grey</span><span class="text-[12px] text-white/50">Матовая · бесплатно</span></span>
+              <span class="ml-auto text-cyan-300 check">●</span>
+            </div>
+            <div class="mode-card rounded-xl px-4 py-3 flex items-center gap-3" data-mode="highlight" data-theme="highlight">
+              <span class="w-9 h-9 rounded-lg shrink-0 grid place-items-center text-[10px] font-black text-black" style="background:#fff">Aa</span>
+              <span><span class="font-display font-semibold block leading-none">Genius Highlight</span><span class="text-[12px] text-white/50">Как в референсе · бесплатно</span></span>
+              <span class="ml-auto text-cyan-300 check opacity-20">●</span>
+            </div>
+            <div class="mode-card locked rounded-xl px-4 py-3 flex items-center gap-3" data-mode="genius" data-theme="genius" data-pro="1">
+              <span class="w-9 h-9 rounded-lg shrink-0" style="background:#FFE600"></span>
+              <span><span class="font-display font-semibold block leading-none">Genius Yellow <span class="pro-badge ml-1">PRO</span></span><span class="text-[12px] text-white/50">Фирменная жёлтая</span></span>
+              <span class="ml-auto text-xl">🔒</span>
+            </div>
+            <div class="mode-card locked rounded-xl px-4 py-3 flex items-center gap-3" data-mode="spotify" data-theme="spotify" data-pro="1">
+              <span class="w-9 h-9 rounded-lg shrink-0" style="background:linear-gradient(135deg,#1ed760,#0a3d24)"></span>
+              <span><span class="font-display font-semibold block leading-none">Spotify Canvas <span class="pro-badge ml-1">PRO</span></span><span class="text-[12px] text-white/50">Градиент под обложку</span></span>
+              <span class="ml-auto text-xl">🔒</span>
+            </div>
+            <div class="mode-card locked rounded-xl px-4 py-3 flex items-center gap-3" data-mode="overdrive" data-theme="cyberpunk" data-pro="1">
+              <span class="w-9 h-9 rounded-lg shrink-0" style="background:linear-gradient(135deg,#00f2fe,#ff00e5); box-shadow:0 0 12px rgba(0,242,254,.6)"></span>
+              <span><span class="font-display font-semibold block leading-none">Neon Cyberpunk <span class="pro-badge ml-1">PRO</span></span><span class="text-[12px] text-white/50">Неон + глитч текста</span></span>
+              <span class="ml-auto text-xl">🔒</span>
+            </div>
+            <!-- Старые аудио-режимы скрыты: концепт полностью переведён на Lyric Cards -->
+          </div>
+          <div class="hidden">
+            <div class="mode-card rounded-xl px-4 py-3" data-mode="circle"><span class="check opacity-20">●</span></div>
+            <div class="mode-card rounded-xl px-4 py-3" data-mode="bars"><span class="check opacity-20">●</span></div>
+            <div class="mode-card rounded-xl px-4 py-3" data-mode="vhs"><span class="check opacity-20">●</span></div>
+            <div class="mode-card rounded-xl px-4 py-3" data-mode="vinyl3d"><span class="check opacity-20">●</span></div>
+          </div>
+        </div>
+
+        <!-- Редактирование текстов карточки на лету -->
+        <div class="mt-5 rounded-2xl bg-black/30 border border-white/10 p-4">
+          <div class="text-[12px] uppercase tracking-[0.18em] text-white/45 mb-2">Текст карточки</div>
+          <input id="editTitle" type="text" placeholder="Название песни" class="w-full rounded-xl bg-black/40 border border-white/10 px-3 py-2.5 text-sm mb-2 placeholder:text-white/30 focus:outline-none focus:border-cyan-300/60 transition" />
+          <input id="editArtist" type="text" placeholder="Имя артиста" class="w-full rounded-xl bg-black/40 border border-white/10 px-3 py-2.5 text-sm mb-2 placeholder:text-white/30 focus:outline-none focus:border-cyan-300/60 transition" />
+          <textarea id="editLyric" rows="3" placeholder="Цитата из песни" class="w-full rounded-xl bg-black/40 border border-white/10 px-3 py-2.5 text-sm placeholder:text-white/30 focus:outline-none focus:border-cyan-300/60 transition"></textarea>
+          <input id="editHandle" type="text" placeholder="TikTok-ник, например @gerlet" class="mt-2 w-full rounded-xl bg-black/40 border border-white/10 px-3 py-2.5 text-sm placeholder:text-white/30 focus:outline-none focus:border-cyan-300/60 transition" />
+          <div class="grid grid-cols-2 gap-2 mt-2">
+            <label class="rounded-xl bg-white/5 border border-white/10 px-3 py-2 text-[12px] cursor-pointer text-center hover:bg-white/10 transition">🖼 Сменить фон<input id="bgInput2" type="file" accept="image/*" class="hidden" /></label>
+            <label class="rounded-xl bg-white/5 border border-white/10 px-3 py-2 text-[12px] cursor-pointer text-center hover:bg-white/10 transition">💿 Сменить обложку<input id="coverInput2" type="file" accept="image/*" class="hidden" /></label>
+          </div>
+        </div>
+
+        <!-- Качество рендера: 720p бесплатно, 1080p и 4K только Pro -->
+        <div class="mt-5">
+          <div class="text-[12px] uppercase tracking-[0.18em] text-white/45 mb-2">Качество рендера</div>
+          <div class="grid grid-cols-3 gap-2" id="qualityGrid">
+            <button class="scheme-btn active rounded-xl p-3 text-center bg-black/30" data-quality="720p">
+              <span class="block font-display font-bold text-sm">720p</span>
+              <span class="block text-[11px] text-emerald-300 font-semibold mt-1">FREE</span>
+            </button>
+            <button class="scheme-btn rounded-xl p-3 text-center bg-black/30" data-quality="1080p" data-pro="1">
+              <span class="block font-display font-bold text-sm">1080p</span>
+              <span class="block text-[11px] text-amber-300 font-semibold mt-1">🔒 PRO</span>
+            </button>
+            <button class="scheme-btn rounded-xl p-3 text-center bg-black/30" data-quality="4k" data-pro="1">
+              <span class="block font-display font-bold text-sm">4K ↕</span>
+              <span class="block text-[11px] text-amber-300 font-semibold mt-1">🔒 PRO</span>
+            </button>
+          </div>
+          <p class="text-[11px] text-white/35 mt-2 leading-relaxed">Free: максимум 1280×720 с вотермарком. Pro: 1920×1080 и вертикальный 4K для Shorts / TikTok без вотермарка.</p>
+        </div>
+
+        <!-- Выбор цветовой схемы -->
+        <div class="mt-5">
+          <div class="text-[12px] uppercase tracking-[0.18em] text-white/45 mb-2">Цветовая схема</div>
+          <div class="grid grid-cols-3 gap-2">
+            <button class="scheme-btn active rounded-xl p-3 text-center bg-black/30" data-scheme="neon">
+              <span class="block h-8 rounded-lg" style="background:linear-gradient(90deg,#00f0ff,#ff00e5,#a3ff00,#ffea00)"></span>
+              <span class="block mt-2 text-[13px] font-semibold">Неон</span>
+            </button>
+            <button class="scheme-btn rounded-xl p-3 text-center bg-black/30" data-scheme="pastel">
+              <span class="block h-8 rounded-lg" style="background:linear-gradient(90deg,#ffd6e0,#c1f0ff,#d9ffcb,#fff3b0)"></span>
+              <span class="block mt-2 text-[13px] font-semibold">Пастель</span>
+            </button>
+            <button class="scheme-btn rounded-xl p-3 text-center bg-black/30" data-scheme="mono">
+              <span class="block h-8 rounded-lg" style="background:linear-gradient(90deg,#000,#666,#bbb,#fff); border:1px solid rgba(255,255,255,.2)"></span>
+              <span class="block mt-2 text-[13px] font-semibold">Монохром</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Слайдер чувствительности -->
+        <div class="mt-5 rounded-2xl bg-black/30 border border-white/10 p-4">
+          <div class="flex items-center justify-between text-sm">
+            <label class="font-semibold">Чувствительность <span class="text-white/40 font-normal">(Gain)</span></label>
+            <span id="gainVal" class="font-mono text-cyan-200 text-[13px]">1.6×</span>
+          </div>
+          <input id="gainSlider" type="range" min="50" max="300" value="160" class="w-full mt-3" />
+          <div class="flex justify-between text-[11px] text-white/35 mt-1"><span>Спокойно</span><span>Взрыв</span></div>
+        </div>
+
+        <!-- Слайдер скорости анимации -->
+        <div class="mt-3 rounded-2xl bg-black/30 border border-white/10 p-4">
+          <div class="flex items-center justify-between text-sm">
+            <label class="font-semibold">Скорость анимации</label>
+            <span id="speedVal" class="font-mono text-fuchsia-200 text-[13px]">1.0×</span>
+          </div>
+          <input id="speedSlider" type="range" min="20" max="250" value="100" class="w-full mt-3" />
+          <div class="flex justify-between text-[11px] text-white/35 mt-1"><span>Медитация</span><span>Рейв</span></div>
+        </div>
+
+        <!-- Кнопка Play/Pause дублирующая -->
+        <button id="playBtn2" class="mt-4 w-full rounded-2xl py-3.5 font-display font-bold text-black hover:brightness-110 active:scale-[0.99] transition" style="background:linear-gradient(90deg,#00f0ff,#ff00e5); box-shadow:0 0 24px rgba(0,240,255,.3)">⏸ Пауза</button>
+        <!-- Экспорт видео: на Canvas-рендеринг действует лимит качества -->
+        <button id="exportBtn" class="mt-2 w-full rounded-2xl py-3 font-display font-semibold text-sm bg-white/5 border border-white/15 hover:bg-white/10 transition">⬇ Скачать видео <span id="exportQuality" class="text-cyan-300">720p</span></button>
+        <!-- Главная кнопка монетизации в панели -->
+        <button id="buyProPanelBtn" class="btn-pro mt-2 w-full rounded-2xl py-3.5 font-display font-bold text-black">⚡ Купить Pro-доступ</button>
+        <p class="mt-3 text-[12px] text-white/35 leading-relaxed text-center">Совет: басы качают частицы и винил сильнее всего. Попробуй Gain 2.2× на дропе.</p>
+        <p class="text-[11px] text-white/30 text-center">Free: 30 сек прослушивания · 720p · вотермарк</p>
+      </aside>
+    </div>
+  </section>
+</main>
+
+<!-- === Paywall: премиальное модальное окно тарифов === -->
+<div id="paywallModal" class="hidden fixed inset-0 z-50 place-items-center bg-black/70 px-4">
+  <div class="fade-in w-full max-w-[560px] rounded-3xl border border-cyan-300/30 bg-[#0b0e1d] p-7 md:p-9 relative overflow-hidden" style="box-shadow:0 0 60px rgba(0,240,255,.25)">
+    <div class="absolute -top-24 -right-24 w-72 h-72 rounded-full pointer-events-none" style="background:#ff00e522; filter:blur(70px)"></div>
+    <div class="absolute -bottom-24 -left-24 w-72 h-72 rounded-full pointer-events-none" style="background:#00f0ff22; filter:blur(70px)"></div>
+    <button id="paywallClose" class="absolute top-4 right-5 text-white/40 hover:text-white text-xl">✕</button>
+    <div class="inline-flex items-center gap-2 text-[11px] tracking-[0.22em] uppercase text-amber-200 bg-amber-400/10 border border-amber-300/30 rounded-full px-4 py-1.5">⚡ Pro-доступ</div>
+    <h3 id="paywallTitle" class="font-display font-bold text-2xl md:text-[28px] mt-4 leading-tight">Хочешь трек целиком без лимитов?</h3>
+    <p id="paywallText" class="text-white/60 text-sm mt-2 leading-relaxed">Бесплатный тариф: 30 секунд, 720p и вотермарк. Pro снимает все ограничения мгновенно.</p>
+    <div class="grid md:grid-cols-2 gap-3 mt-6">
+      <div class="pay-card rounded-2xl p-5">
+        <div class="font-display font-bold">Разовый рендер</div>
+        <div class="text-[13px] text-white/55 mt-1">Одно видео без вотермарка в 1080p</div>
+        <div class="font-display font-bold text-2xl mt-3">99 ₽</div>
+        <button class="pay-btn mt-4 w-full rounded-xl py-2.5 font-bold text-black text-sm" data-plan="single" style="background:linear-gradient(90deg,#fff,#c9f6ff)">Купить за 99 ₽</button>
+      </div>
+      <div class="pay-card featured rounded-2xl p-5">
+        <div class="font-display font-bold">Pro-подписка <span class="text-[11px] bg-black/40 px-2 py-0.5 rounded-full ml-1">− ХИТ −</span></div>
+        <div class="text-[13px] text-white/60 mt-1">Месяц: 1080p + 4K Vertical, все пресеты, без лимитов</div>
+        <div class="font-display font-bold text-2xl mt-3">499 ₽<span class="text-sm font-normal text-white/50">/мес</span></div>
+        <button class="pay-btn btn-pro mt-4 w-full rounded-xl py-2.5 font-bold text-black text-sm" data-plan="pro_month">Оформить Pro — 499 ₽</button>
+      </div>
+    </div>
+    <div id="payStatus" class="hidden mt-4 text-sm text-center text-cyan-200 bg-cyan-400/10 border border-cyan-300/30 rounded-xl px-4 py-2.5"></div>
+    <p class="text-[11px] text-white/30 text-center mt-4">Демо-режим оплаты: реально деньги не списываются. После привязки шлюза замени <code class="text-cyan-200">initPayment()</code>.</p>
+  </div>
+</div>
+
+<!-- Скрытый аудио-элемент: источник звука для Web Audio API -->
+<audio id="audio" crossorigin="anonymous" preload="auto"></audio>
+
+<script>
+/* =====================================================================
+   UmbrellaCards — логика визуализатора
+   Всё выполняется локально в браузере, без сервера.
+   ===================================================================== */
+
+// ---------- Состояние приложения ----------
+const BILLING = {
+  FREE_MAX_SECONDS: 30,        // Лимит бесплатного прослушивания
+  FREE_MAX_WIDTH: 1280,        // Лимит бесплатного рендера по ширине (720p)
+  FREE_MAX_HEIGHT: 720,        // Лимит бесплатного рендера по высоте
+  PRO_MAX_WIDTH: 1920,         // Pro Full HD
+  PRO_MAX_HEIGHT: 1080,
+  VERTICAL_W: 1440,            // Вертикальный Pro для Shorts/TikTok (облегчённый 4K)
+  VERTICAL_H: 2560,
+  WATERMARK_TEXT: 'Created via UmbrellaCards', // Жёстко зашитый вотермарк
+};
+const state = {
+  // --- Монетизация: один флаг отключает все лимиты ---
+  isUserPro: false,          // Переключится в true после успешной оплаты
+  quality: '720p',           // Текущее качество: 720p | 1080p | 4k
+  paywallReason: '',         // Причина открытия paywall: limit_30s | quality_4k | preset | manual
+  isRecording: false,        // Идёт ли запись видео через MediaRecorder
+  mediaRecorder: null,
+  recordedChunks: [],
+  trimStartSec: 0,           // Начало выбранного фрагмента (сек)
+  trimEndSec: 30,            // Конец выбранного фрагмента (сек)
+  loopFragment: true,        // Зацикливать фрагмент при прослушивании
+  audioContext: null,      // Экземпляр AudioContext (создаётся по клику пользователя)
+  analyser: null,          // Узел анализа частот
+  sourceNode: null,        // Связка <audio> -> Web Audio (создаётся один раз)
+  frequencyData: null,     // Сырой массив байтовых частот из getByteFrequencyData
+  smoothedData: null,      // Сглаженный массив для органичного движения
+  mode: 'circle',          // Текущий режим: circle | bars | vhs
+  scheme: 'neon',          // Текущая палитра: neon | pastel | mono
+  gain: 1.6,               // Чувствительность визуализатора (множитель)
+  speed: 1.0,              // Скорость анимации (множитель)
+  angle: 0,                // Угол вращения винила
+  time: 0,                 // Глобальное время анимации
+  particles: [],           // Массив светящихся частиц-искр для режима Neon Circle
+  hasTrack: false,         // Загружен ли трек
+  isPlaying: false,        // Играет ли сейчас
+  // --- Новое: данные для детекции ударов баса (Beat Detection) ---
+  bassHistory: [],         // История уровня басов за последние кадры
+  bassAverage: 0,          // Скользящее среднее басов
+  beatPulse: 0,            // Вспышка удара (0..1), плавно затухает
+  isBeat: false,           // Флаг: в текущем кадре зафиксирован удар
+  needsHardClear: true,    // Флаг: нужна полная очистка (смена режима / ресайз)
+};
+
+// ---------- Ссылки на элементы интерфейса ----------
+const screenUpload = document.getElementById('screen-upload');
+const screenPlayer = document.getElementById('screen-player');
+const dropzone = document.getElementById('dropzone');
+const fileInput = document.getElementById('fileInput');
+const browseBtn = document.getElementById('browseBtn');
+const fileNamePreview = document.getElementById('fileNamePreview');
+const urlInput = document.getElementById('urlInput');
+const useUrlBtn = document.getElementById('useUrlBtn');
+const startBtn = document.getElementById('startBtn');
+const uploadError = document.getElementById('uploadError');
+const audio = document.getElementById('audio');
+const stage = document.getElementById('stage');
+const ctx = stage.getContext('2d');
+const canvasWrap = document.getElementById('canvasWrap');
+const trackTitle = document.getElementById('trackTitle');
+const engineLabel = document.getElementById('engineLabel');
+const playBtn = document.getElementById('playBtn');
+const playBtn2 = document.getElementById('playBtn2');
+const pausedOverlay = document.getElementById('pausedOverlay');
+const statusPill = document.getElementById('statusPill');
+const seekBar = document.getElementById('seekBar');
+const volumeBar = document.getElementById('volumeBar');
+const timeCurrent = document.getElementById('timeCurrent');
+const timeTotal = document.getElementById('timeTotal');
+const gainSlider = document.getElementById('gainSlider');
+const speedSlider = document.getElementById('speedSlider');
+const gainVal = document.getElementById('gainVal');
+const speedVal = document.getElementById('speedVal');
+const backBtn = document.getElementById('backBtn');
+const fullscreenBtn = document.getElementById('fullscreenBtn');
+// --- Монетизация: элементы paywall и биллинга ---
+const paywallModal = document.getElementById('paywallModal');
+const paywallClose = document.getElementById('paywallClose');
+const paywallTitle = document.getElementById('paywallTitle');
+const paywallText = document.getElementById('paywallText');
+const payStatus = document.getElementById('payStatus');
+const buyProHeaderBtn = document.getElementById('buyProHeaderBtn');
+const buyProPanelBtn = document.getElementById('buyProPanelBtn');
+const proBadge = document.getElementById('proBadge');
+const exportBtn = document.getElementById('exportBtn');
+const exportQuality = document.getElementById('exportQuality');
+// --- Lyric Cards: поля оформления ---
+const bgInput = document.getElementById('bgInput');
+const coverInput = document.getElementById('coverInput');
+const songTitleInput = document.getElementById('songTitleInput');
+const songArtistInput = document.getElementById('songArtistInput');
+const songLyricInput = document.getElementById('songLyricInput');
+const bgName = document.getElementById('bgName');
+const coverName = document.getElementById('coverName');
+const editTitle = document.getElementById('editTitle');
+const editArtist = document.getElementById('editArtist');
+const editLyric = document.getElementById('editLyric');
+const bgInput2 = document.getElementById('bgInput2');
+const coverInput2 = document.getElementById('coverInput2');
+let bgImageEl = null;    // Фото артиста для фона 9:16
+let coverImageEl = null; // Обложка трека для шапки карточки
+// --- Референс + обрезка: ник и фрагмент ---
+const songHandleInput = document.getElementById('songHandleInput');
+const editHandle = document.getElementById('editHandle');
+const trimStart = document.getElementById('trimStart');
+const trimEnd = document.getElementById('trimEnd');
+const trimStartLabel = document.getElementById('trimStartLabel');
+const trimEndLabel = document.getElementById('trimEndLabel');
+const loopFragment = document.getElementById('loopFragment');
+const previewFragmentBtn = document.getElementById('previewFragmentBtn');
+const fragmentInfo = document.getElementById('fragmentInfo');
+
+let pendingFile = null; // Файл, выбранный пользователем, ждёт нажатия кнопки старта
+let pendingUrl = '';    // Ссылка, введённая пользователем
+let objectUrl = null;   // Временный blob-адрес для локального файла
+
+/* ---------- Декоративные фейковые полосы на экране загрузки ---------- */
+(function renderFakeBars() {
+  const box = document.getElementById('fakeBars');
+  for (let i = 0; i < 42; i++) {
+    const bar = document.createElement('div');
+    bar.style.cssText = 'width:6px;border-radius:99px;background:linear-gradient(180deg,#00f0ff,#ff00e5);transition:height .3s';
+    box.appendChild(bar);
+  }
+  const bars = [...box.children];
+  setInterval(() => {
+    bars.forEach((b) => {
+      const h = 12 + Math.random() * 95;
+      b.style.height = h + 'px';
+      b.style.opacity = 0.35 + Math.random() * 0.65;
+      b.style.boxShadow = '0 0 12px rgba(0,240,255,.6)';
+    });
+  }, 320);
+})();
+
+/* ---------- Работа с файлами: выбор вручную ---------- */
+browseBtn.addEventListener('click', (event) => {
+  event.stopPropagation(); // Не даём клику всплыть до dropzone
+  fileInput.click();
+});
+dropzone.addEventListener('click', () => fileInput.click());
+
+fileInput.addEventListener('change', () => {
+  if (fileInput.files && fileInput.files[0]) {
+    selectFile(fileInput.files[0]);
+  }
+});
+
+/* ---------- Drag-and-Drop: подсветка при перетаскивании ---------- */
+['dragenter', 'dragover'].forEach((name) => {
+  dropzone.addEventListener(name, (event) => {
+    event.preventDefault();
+    dropzone.classList.add('dragover');
+  });
+});
+['dragleave', 'drop'].forEach((name) => {
+  dropzone.addEventListener(name, (event) => {
+    event.preventDefault();
+    dropzone.classList.remove('dragover');
+  });
+});
+dropzone.addEventListener('drop', (event) => {
+  const file = event.dataTransfer.files && event.dataTransfer.files[0];
+  if (file) selectFile(file);
+});
+
+/* ---------- Запоминаем выбранный файл и показываем его имя ---------- */
+function selectFile(file) {
+  const ok = /\.(mp3|wav|ogg|m4a|flac)$/i.test(file.name) || file.type.startsWith('audio');
+  if (!ok) {
+    showUploadError('Похоже, это не аудиофайл. Пожалуйста, выбери .mp3 или .wav.');
+    return;
+  }
+  hideUploadError();
+  pendingFile = file;
+  pendingUrl = '';
+  urlInput.value = '';
+  fileNamePreview.classList.remove('hidden');
+  fileNamePreview.textContent = '♪ ' + file.name;
+}
+
+/* ---------- Кнопка OK для ссылки ---------- */
+useUrlBtn.addEventListener('click', () => {
+  const value = urlInput.value.trim();
+  if (!value) {
+    showUploadError('Вставь ссылку на аудиофайл, например https://example.com/track.mp3');
+    return;
+  }
+  hideUploadError();
+  pendingUrl = value;
+  pendingFile = null;
+  fileNamePreview.classList.remove('hidden');
+  fileNamePreview.textContent = '🔗 Ссылка готова к запуску';
+});
+
+/* ---------- Сообщения об ошибках на экране загрузки ---------- */
+function showUploadError(text) {
+  uploadError.textContent = text;
+  uploadError.classList.remove('hidden');
+}
+function hideUploadError() {
+  uploadError.classList.add('hidden');
+}
+
+/* ---------- Главная кнопка: начать визуализацию ---------- */
+startBtn.addEventListener('click', async () => {
+  if (!pendingFile && !pendingUrl) {
+    showUploadError('Сначала перетащи аудиофайл или вставь ссылку на аудио.');
+    return;
+  }
+  hideUploadError();
+  try {
+    if (pendingFile) await loadFileTrack(pendingFile);
+    else await loadUrlTrack(pendingUrl);
+  } catch (err) {
+    console.error(err);
+    showUploadError('Не получилось загрузить трек. Проверь файл или ссылку и попробуй ещё раз.');
+  }
+});
+
+/* ---------- Загрузка локального файла ---------- */
+async function loadFileTrack(file) {
+  // Освобождаем предыдущий blob-адрес, чтобы не засорять память
+  if (objectUrl) URL.revokeObjectURL(objectUrl);
+  objectUrl = URL.createObjectURL(file);
+  trackTitle.textContent = file.name.replace(/\.[^.]+$/, '');
+  await prepareAudioAndPlay(objectUrl);
+}
+
+/* ---------- Загрузка трека по ссылке ---------- */
+async function loadUrlTrack(url) {
+  try {
+    const name = decodeURIComponent(url.split('/').pop().split('?')[0] || 'Онлайн-трек');
+    trackTitle.textContent = name;
+  } catch { trackTitle.textContent = 'Онлайн-трек'; }
+  await prepareAudioAndPlay(url);
+}
+
+/* ---------- Создание AudioContext и запуск воспроизведения ---------- */
+async function prepareAudioAndPlay(src) {
+  // Создаём AudioContext только после жеста пользователя (требование браузеров)
+  if (!state.audioContext) {
+    const AC = window.AudioContext || window.webkitAudioContext;
+    state.audioContext = new AC();
+    state.analyser = state.audioContext.createAnalyser();
+    state.analyser.fftSize = 2048;                 // Высокое разрешение спектра
+    // Мягкое сглаживание спектра: 0.85 даёт дорогое, плавное движение без дрожания
+    state.analyser.smoothingTimeConstant = 0.85;
+    const count = state.analyser.frequencyBinCount;
+    state.frequencyData = new Uint8Array(count);
+    state.smoothedData = new Float32Array(count);
+    // Связываем <audio> с графом Web Audio ровно один раз
+    state.sourceNode = state.audioContext.createMediaElementSource(audio);
+    state.sourceNode.connect(state.analyser);
+    state.analyser.connect(state.audioContext.destination);
+  } else {
+    // Если контекст уже создан, просто обновляем константу сглаживания
+    state.analyser.smoothingTimeConstant = 0.85;
+  }
+  // Если вкладка была в фоне, контекст может быть приостановлен — возобновляем
+  if (state.audioContext.state === 'suspended') await state.audioContext.resume();
+
+  audio.src = src;
+  audio.volume = volumeBar.value / 100;
+
+  // Переходим на экран плеера до старта, чтобы холст уже имел размеры
+  showPlayerScreen();
+  resizeCanvas();
+  initParticles();
+
+  try {
+    await audio.play();
+    state.hasTrack = true;
+    setPlaying(true);
+  } catch (err) {
+    // Автоплей иногда блокируется — показываем состояние паузы, пользователь нажмёт Play
+    console.warn('Автозапуск заблокирован:', err);
+    setPlaying(false);
+  }
+}
+
+/* ---------- Переключение экранов ---------- */
+function showPlayerScreen() {
+  screenUpload.classList.add('hidden');
+  screenPlayer.classList.remove('hidden');
+  screenPlayer.classList.add('fade-in');
+  // Синхронизируем тексты Lyric Card из формы загрузки
+  if (editTitle && songTitleInput) editTitle.value = songTitleInput.value || '';
+  if (editArtist && songArtistInput) editArtist.value = songArtistInput.value || '';
+  if (editLyric && songLyricInput) editLyric.value = songLyricInput.value || '';
+  const __handleEl = document.getElementById('editHandle');
+  const __songHandle = document.getElementById('songHandleInput');
+  if (__handleEl && __songHandle) __handleEl.value = __songHandle.value || '';
+  updateEngineLabel();
+  state.needsHardClear = true; // После смены экрана убираем шлейф полностью
+  // Небольшая задержка, чтобы layout успел построиться перед замером холста
+  requestAnimationFrame(() => {
+    resizeCanvas();
+    if (window.__syncLyricMeta) window.__syncLyricMeta();
+    // Название трека в шапке = название песни, если введено
+    if (songTitleInput && songTitleInput.value.trim()) trackTitle.textContent = songTitleInput.value.trim();
+  });
+}
+backBtn.addEventListener('click', () => {
+  audio.pause();
+  setPlaying(false);
+  screenPlayer.classList.add('hidden');
+  screenUpload.classList.remove('hidden');
+});
+
+/* ---------- Кнопки воспроизведения и паузы ---------- */
+function setPlaying(value) {
+  state.isPlaying = value;
+  const icon = value ? '⏸' : '▶';
+  playBtn.textContent = icon;
+  playBtn2.textContent = value ? '⏸ Пауза' : '▶ Играть';
+  statusPill.textContent = value ? 'Играет' : 'Пауза';
+  statusPill.className = value
+    ? 'px-3 py-1 rounded-full bg-emerald-400/10 border border-emerald-300/30 text-emerald-200 font-semibold'
+    : 'px-3 py-1 rounded-full bg-amber-400/10 border border-amber-300/30 text-amber-200 font-semibold';
+  pausedOverlay.classList.toggle('hidden', value);
+  pausedOverlay.classList.toggle('grid', !value);
+}
+async function togglePlay() {
+  if (!state.hasTrack && !audio.src) return;
+  try {
+    if (audio.paused) {
+      if (state.audioContext && state.audioContext.state === 'suspended') await state.audioContext.resume();
+      await audio.play();
+      setPlaying(true);
+    } else {
+      audio.pause();
+      setPlaying(false);
+    }
+  } catch (err) {
+    console.error(err);
+  }
+}
+playBtn.addEventListener('click', togglePlay);
+playBtn2.addEventListener('click', togglePlay);
+audio.addEventListener('play', () => setPlaying(true));
+audio.addEventListener('pause', () => setPlaying(false));
+
+/* ---------- Ползунок перемотки и отображение времени ---------- */
+function formatTime(sec) {
+  if (!isFinite(sec)) return '0:00';
+  const m = Math.floor(sec / 60);
+  const s = Math.floor(sec % 60);
+  return m + ':' + String(s).padStart(2, '0');
+}
+audio.addEventListener('loadedmetadata', () => {
+  timeTotal.textContent = formatTime(audio.duration);
+  // Обрезка: по умолчанию фрагмент 0:00 → min(30s, длительность)
+  if (audio.duration && isFinite(audio.duration)) {
+    state.trimStartSec = 0;
+    state.trimEndSec = Math.min(audio.duration, state.isUserPro ? audio.duration : BILLING.FREE_MAX_SECONDS);
+    if (trimStart) trimStart.value = 0;
+    if (trimEnd) trimEnd.value = Math.floor((state.trimEndSec / audio.duration) * 1000);
+    updateTrimUI();
+  }
+});
+audio.addEventListener('timeupdate', () => {
+  timeCurrent.textContent = formatTime(audio.currentTime);
+  if (audio.duration) seekBar.value = Math.floor((audio.currentTime / audio.duration) * 1000);
+  // --- Фрагмент: зацикливаем выбранный кусок под цитату ---
+  if (state.loopFragment && audio.duration && audio.currentTime >= state.trimEndSec - 0.05) {
+    try { audio.currentTime = state.trimStartSec; } catch (e) {}
+    if (state.isRecording) stopRecording(); // Экспорт фрагмента завершён
+    return;
+  }
+  // --- Paywall: бесплатный тариф останавливается ровно на 30-й секунде ---
+  if (!state.isUserPro && audio.currentTime >= BILLING.FREE_MAX_SECONDS) {
+    audio.pause();
+    setPlaying(false);
+    // Отматываем чуть назад, чтобы пользователь мог переслушать превью
+    try { audio.currentTime = BILLING.FREE_MAX_SECONDS; } catch (e) {}
+    openPaywall('limit_30s');
+  }
+});
+seekBar.addEventListener('input', () => {
+  if (!audio.duration) return;
+  const next = (seekBar.value / 1000) * audio.duration;
+  // --- Paywall: бесплатным запрещена перемотка дальше 30 секунд ---
+  if (!state.isUserPro && next > BILLING.FREE_MAX_SECONDS) {
+    seekBar.value = Math.floor((BILLING.FREE_MAX_SECONDS / audio.duration) * 1000);
+    openPaywall('limit_30s');
+    return;
+  }
+  audio.currentTime = next;
+});
+volumeBar.addEventListener('input', () => {
+  audio.volume = volumeBar.value / 100;
+});
+
+/* ---------- Обрезка фрагмента под момент цитаты ---------- */
+function trimToSeconds(sliderVal) {
+  if (!audio.duration || !isFinite(audio.duration)) return 0;
+  return (sliderVal / 1000) * audio.duration;
+}
+function updateTrimUI() {
+  if (trimStartLabel) trimStartLabel.textContent = formatTime(state.trimStartSec);
+  if (trimEndLabel) trimEndLabel.textContent = formatTime(state.trimEndSec);
+  if (fragmentInfo) {
+    const len = Math.max(0, state.trimEndSec - state.trimStartSec);
+    fragmentInfo.textContent = 'Фрагмент: ' + formatTime(state.trimStartSec) + ' → ' + formatTime(state.trimEndSec) +
+      ' (' + len.toFixed(1) + ' сек) · экспорт запишет только его';
+  }
+}
+if (trimStart) trimStart.addEventListener('input', () => {
+  if (!audio.duration) return;
+  state.trimStartSec = trimToSeconds(+trimStart.value);
+  if (state.trimStartSec >= state.trimEndSec) {
+    state.trimStartSec = Math.max(0, state.trimEndSec - 1);
+    trimStart.value = Math.floor((state.trimStartSec / audio.duration) * 1000);
+  }
+  updateTrimUI();
+});
+if (trimEnd) trimEnd.addEventListener('input', () => {
+  if (!audio.duration) return;
+  state.trimEndSec = trimToSeconds(+trimEnd.value);
+  // Free не может удлинить фрагмент дальше 30 секунд
+  if (!state.isUserPro && state.trimEndSec > BILLING.FREE_MAX_SECONDS) {
+    state.trimEndSec = BILLING.FREE_MAX_SECONDS;
+    trimEnd.value = Math.floor((state.trimEndSec / audio.duration) * 1000);
+    openPaywall('limit_30s');
+  }
+  if (state.trimEndSec <= state.trimStartSec) {
+    state.trimEndSec = Math.min(audio.duration, state.trimStartSec + 1);
+    trimEnd.value = Math.floor((state.trimEndSec / audio.duration) * 1000);
+  }
+  updateTrimUI();
+});
+if (loopFragment) loopFragment.addEventListener('change', () => { state.loopFragment = loopFragment.checked; });
+if (previewFragmentBtn) previewFragmentBtn.addEventListener('click', async () => {
+  if (!audio.src) return;
+  try { audio.currentTime = state.trimStartSec; } catch (e) {}
+  if (state.audioContext && state.audioContext.state === 'suspended') await state.audioContext.resume();
+  await audio.play().catch(() => {});
+  setPlaying(true);
+});
+
+/* ---------- Панель настроек: темы Lyric Card (с Pro-замками) ---------- */
+document.querySelectorAll('.mode-card').forEach((card) => {
+  card.addEventListener('click', () => {
+    // --- Paywall: Pro-темы заблокированы для бесплатных ---
+    if (card.dataset.pro === '1' && !state.isUserPro) {
+      openPaywall('preset');
+      return;
+    }
+    if (!card.dataset.theme && !card.dataset.mode) return; // Скрытые legacy-карточки
+    document.querySelectorAll('#themeGrid .mode-card').forEach((c) => {
+      c.classList.remove('active');
+      const chk = c.querySelector('.check');
+      if (chk) chk.classList.add('opacity-20');
+    });
+    if (card.closest('#themeGrid')) {
+      card.classList.add('active');
+      const chk = card.querySelector('.check');
+      if (chk) chk.classList.remove('opacity-20');
+    }
+    // Новая логика: тема карточки + legacy-режим для совместимости
+    const theme = card.dataset.theme || card.dataset.mode;
+    state.mode = card.dataset.mode || theme;
+    if (window.LyricVisualizer && (theme === 'standard' || theme === 'highlight' || theme === 'genius' || theme === 'spotify' || theme === 'cyberpunk')) {
+      LyricVisualizer.setTheme(theme);
+    }
+    // При смене темы полностью очищаем холст
+    state.needsHardClear = true;
+    updateEngineLabel();
+  });
+});
+
+/* ---------- Панель настроек: цветовые схемы ---------- */
+document.querySelectorAll('.scheme-btn[data-scheme]').forEach((btn) => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.scheme-btn[data-scheme]').forEach((b) => b.classList.remove('active'));
+    btn.classList.add('active');
+    state.scheme = btn.dataset.scheme;
+    updateEngineLabel();
+  });
+});
+
+/* ---------- Качество рендера: 1080p и 4K только для Pro ---------- */
+document.querySelectorAll('#qualityGrid [data-quality]').forEach((btn) => {
+  btn.addEventListener('click', () => {
+    const q = btn.dataset.quality;
+    if (btn.dataset.pro === '1' && !state.isUserPro) {
+      openPaywall('quality_4k');
+      return;
+    }
+    document.querySelectorAll('#qualityGrid [data-quality]').forEach((b) => b.classList.remove('active'));
+    btn.classList.add('active');
+    state.quality = q;
+    if (exportQuality) exportQuality.textContent = q === '4k' ? '4K ↕' : q;
+    // Вертикаль строгая 9:16 для всех качеств (TikTok / Reels)
+    canvasWrap.style.aspectRatio = '9/16';
+    resizeCanvas();
+    updateEngineLabel();
+  });
+});
+
+function updateEngineLabel() {
+  // Названия Lyric-тем + fallback на старые режимы
+  const names = { standard: 'Standard Grey', highlight: 'Genius Highlight', genius: 'Genius Yellow PRO', spotify: 'Spotify Canvas PRO', cyberpunk: 'Neon Cyberpunk PRO', circle: 'Neon Circle', bars: 'Waveform Bars', vhs: 'Retro VHS', vinyl3d: '3D-Vinyl PRO', overdrive: 'Overdrive PRO' };
+  const modeName = names[state.mode] || state.mode;
+  const schemeName = state.scheme === 'neon' ? 'Неон' : state.scheme === 'pastel' ? 'Пастель' : 'Монохром';
+  const qName = state.quality === '4k' ? '4K ↕' : state.quality;
+  const proMark = state.isUserPro ? 'PRO' : 'FREE';
+  engineLabel.textContent = 'Lyric Card 9:16 · ' + modeName + ' · ' + qName + ' · ' + proMark;
+}
+
+/* ---------- Lyric Card: загрузка фото с лимитом разрешения для Free ---------- */
+function loadImageFile(file, maxSide, done) {
+  const url = URL.createObjectURL(file);
+  const img = new Image();
+  img.onload = () => {
+    // Free-тариф: фото фона ужимается до стандартного разрешения
+    let w = img.naturalWidth, h = img.naturalHeight;
+    if (!state.isUserPro) {
+      const s = Math.min(1, maxSide / Math.max(w, h));
+      if (s < 1) {
+        const c = document.createElement('canvas');
+        c.width = Math.floor(w * s); c.height = Math.floor(h * s);
+        c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+        const small = new Image();
+        small.onload = () => { URL.revokeObjectURL(url); done(small); };
+        small.src = c.toDataURL('image/jpeg', 0.85);
+        return;
+      }
+    }
+    done(img);
+  };
+  img.src = url;
+}
+function bindLyricInputs() {
+  const bgFiles = [bgInput, bgInput2].filter(Boolean);
+  bgFiles.forEach((inp) => inp.addEventListener('change', () => {
+    const f = inp.files && inp.files[0];
+    if (!f) return;
+    loadImageFile(f, 1280, (img) => {
+      bgImageEl = img;
+      if (window.LyricVisualizer) LyricVisualizer.setBackground(img);
+      if (bgName) bgName.textContent = '✓ ' + f.name;
+    });
+  }));
+  const coverFiles = [coverInput, coverInput2].filter(Boolean);
+  coverFiles.forEach((inp) => inp.addEventListener('change', () => {
+    const f = inp.files && inp.files[0];
+    if (!f) return;
+    loadImageFile(f, 800, (img) => {
+      coverImageEl = img;
+      if (window.LyricVisualizer) LyricVisualizer.setCover(img);
+      if (coverName) coverName.textContent = '✓ ' + f.name;
+    });
+  }));
+  const syncMeta = () => {
+    const title = (editTitle && editTitle.value) || (songTitleInput && songTitleInput.value) || trackTitle.textContent;
+    const artist = (editArtist && editArtist.value) || (songArtistInput && songArtistInput.value) || '';
+    const lyric = (editLyric && editLyric.value) || (songLyricInput && songLyricInput.value) || '';
+    let handle = (editHandle && editHandle.value) || (songHandleInput && songHandleInput.value) || '@username';
+    handle = handle.trim() || '@username';
+    if (handle[0] !== '@') handle = '@' + handle;
+    if (window.LyricVisualizer) LyricVisualizer.setMeta({ title: title, artist: artist, lyric: lyric, handle: handle });
+  };
+  [songTitleInput, songArtistInput, songLyricInput, songHandleInput, editTitle, editArtist, editLyric, editHandle].filter(Boolean).forEach((el) => {
+    el.addEventListener('input', syncMeta);
+  });
+  window.__syncLyricMeta = syncMeta;
+}
+bindLyricInputs();
+
+/* ---------- Панель настроек: слайдеры ---------- */
+gainSlider.addEventListener('input', () => {
+  state.gain = gainSlider.value / 100;
+  gainVal.textContent = state.gain.toFixed(1) + '×';
+});
+speedSlider.addEventListener('input', () => {
+  state.speed = speedSlider.value / 100;
+  speedVal.textContent = state.speed.toFixed(1) + '×';
+});
+
+/* ---------- Полноэкранный режим для холста ---------- */
+fullscreenBtn.addEventListener('click', () => {
+  if (document.fullscreenElement) document.exitFullscreen();
+  else if (canvasWrap.requestFullscreen) canvasWrap.requestFullscreen();
+});
+
+/* ---------- Размер холста 9:16 с жёстким лимитом качества (Paywall) ---------- */
+function resizeCanvas() {
+  const rect = canvasWrap.getBoundingClientRect();
+  const cssW = Math.max(200, rect.width || 380);
+  // Строгая вертикаль 9:16 под TikTok
+  let targetW, targetH;
+  if (!state.isUserPro) {
+    // Free: максимум 720×1280
+    targetW = Math.min(720, Math.floor(cssW * (Math.min(window.devicePixelRatio || 1, 2))));
+    targetW = Math.min(targetW, BILLING.FREE_MAX_WIDTH);
+    targetH = Math.floor(targetW * 16 / 9);
+  } else if (state.quality === '4k') {
+    // Pro вертикальный 4K: 1440×2560 (облегчённый, чтобы не убить браузер)
+    targetW = BILLING.VERTICAL_W;
+    targetH = BILLING.VERTICAL_H;
+  } else if (state.quality === '1080p') {
+    targetW = 1080; targetH = 1920;
+  } else {
+    targetW = 720; targetH = 1280;
+  }
+  stage.width = targetW;
+  stage.height = targetH;
+  ctx.fillStyle = '#0a0a0c';
+  ctx.fillRect(0, 0, stage.width, stage.height);
+  state.needsHardClear = true;
+  // Инициализируем движок Lyric Cards при первом замере
+  if (window.LyricVisualizer && !window.__lyricInit) {
+    LyricVisualizer.init(stage);
+    window.__lyricInit = true;
+    if (bgImageEl) LyricVisualizer.setBackground(bgImageEl);
+    if (coverImageEl) LyricVisualizer.setCover(coverImageEl);
+    if (window.__syncLyricMeta) window.__syncLyricMeta();
+    LyricVisualizer.setPro(state.isUserPro);
+  }
+  if (window.LyricVisualizer && window.__lyricInit) LyricVisualizer.setPro(state.isUserPro);
+}
+window.addEventListener('resize', resizeCanvas);
+
+/* =====================================================================
+   МОНЕТИЗАЦИЯ: paywall-модалка, оплата, Pro-режим, экспорт
+   ===================================================================== */
+function openPaywall(reason) {
+  state.paywallReason = reason || 'manual';
+  // Красивые тексты под каждую причину блокировки
+  if (reason === 'limit_30s') {
+    paywallTitle.textContent = 'Хочешь слушать и рендерить трек целиком?';
+    paywallText.textContent = 'Бесплатно доступно только 30 секунд превью в 720p с вотермарком. Pro открывает полный трек, 1080p / 4K и все пресеты.';
+  } else if (reason === 'quality_4k') {
+    paywallTitle.textContent = '1080p и 4K Vertical — только в Pro';
+    paywallText.textContent = 'Бесплатный тариф ограничен 720p. Возьми разовый рендер за 99 ₽ или Pro за 499 ₽/мес.';
+  } else if (reason === 'preset') {
+    paywallTitle.textContent = 'Этот пресет — премиальный 💎';
+    paywallText.textContent = '3D-Vinyl и Cyberpunk Overdrive доступны только в Pro. Разблокируй их за 1 клик.';
+  } else {
+    paywallTitle.textContent = 'Стань Pro и сними все лимиты ⚡';
+    paywallText.textContent = 'Полные треки без стопов, 1080p / 4K Vertical, экспорт без вотермарка, все пресеты.';
+  }
+  if (payStatus) payStatus.classList.add('hidden');
+  paywallModal.classList.remove('hidden');
+  paywallModal.classList.add('grid');
+}
+function closePaywall() {
+  paywallModal.classList.add('hidden');
+  paywallModal.classList.remove('grid');
+}
+if (paywallClose) paywallClose.addEventListener('click', closePaywall);
+paywallModal.addEventListener('click', (e) => { if (e.target === paywallModal) closePaywall(); });
+if (buyProHeaderBtn) buyProHeaderBtn.addEventListener('click', () => openPaywall('manual'));
+if (buyProPanelBtn) buyProPanelBtn.addEventListener('click', () => openPaywall('manual'));
+
+/* ---------- Заглушка платёжного шлюза: замени на CloudPayments / ЮKassa / Stripe ---------- */
+async function initPayment(plan) {
+  // plan: 'single' (99 ₽) или 'pro_month' (499 ₽)
+  // Боевая интеграция: здесь создаёшь заказ на бэкенде, открываешь виджет оплаты,
+  // после webhook/callback вызываешь onPaymentSuccess(plan).
+  // Пример для ЮKassa:
+  //   const order = await fetch('/api/payments/create', { method:'POST', body: JSON.stringify({plan}) }).then(r=>r.json());
+  //   const widget = new YooMoneyCheckoutWidget({ confirmation_token: order.token, ... });
+  // Сейчас — демо: имитируем задержку шлюза 1.2 сек и успех.
+  if (payStatus) {
+    payStatus.classList.remove('hidden');
+    payStatus.textContent = 'Создаём платёж (' + (plan === 'single' ? '99 ₽' : '499 ₽') + ')… Перенаправляем на шлюз…';
+  }
+  await new Promise((r) => setTimeout(r, 1200));
+  onPaymentSuccess(plan);
+  return true;
+}
+/* ---------- Успешная оплата: снимаем все лимиты на лету ---------- */
+function onPaymentSuccess(plan) {
+  state.isUserPro = true; // Один флаг отключает вотермарк, лимит 30 сек и качество
+  try { localStorage.setItem('umbrellacards_pro', '1'); } catch (e) {}
+  if (window.LyricVisualizer) LyricVisualizer.setPro(true);
+  if (payStatus) {
+    payStatus.classList.remove('hidden');
+    payStatus.textContent = '✅ Оплата прошла! Pro-доступ активирован' + (plan === 'single' ? ' (разовый рендер).' : ' (подписка на месяц).');
+  }
+  updateProUI();
+  resizeCanvas();
+  setTimeout(closePaywall, 1400);
+}
+/* ---------- Обновление интерфейса после покупки Pro ---------- */
+function updateProUI() {
+  if (proBadge) proBadge.classList.toggle('hidden', !state.isUserPro);
+  // Разблокируем Pro-пресеты: убираем замки
+  document.querySelectorAll('.mode-card[data-pro="1"]').forEach((c) => {
+    c.classList.toggle('locked', !state.isUserPro);
+    const lock = c.querySelector('.ml-auto');
+    if (lock) lock.textContent = state.isUserPro ? '★' : '🔒';
+  });
+  const headerBtn = document.getElementById('buyProHeaderBtn');
+  const panelBtn = document.getElementById('buyProPanelBtn');
+  if (state.isUserPro) {
+    if (headerBtn) headerBtn.textContent = '★ У тебя Pro';
+    if (panelBtn) panelBtn.textContent = '★ Pro активен';
+  }
+  updateEngineLabel();
+}
+// Кнопки тарифов в модалке
+document.querySelectorAll('.pay-btn').forEach((b) => {
+  b.addEventListener('click', () => initPayment(b.dataset.plan));
+});
+// Восстанавливаем Pro после перезагрузки (демо; в бою проверять подписку на сервере)
+try { if (localStorage.getItem('umbrellacards_pro') === '1' || localStorage.getItem('musicwave_pro') === '1') { state.isUserPro = true; setTimeout(updateProUI, 0); } } catch (e) {}
+
+/* ---------- Экспорт видео с холста (лимиты качества + вотермарк) ---------- */
+if (exportBtn) exportBtn.addEventListener('click', async () => {
+  if (!state.hasTrack && !audio.src) return;
+  // Pro-качества недоступны бесплатным даже для экспорта
+  if (!state.isUserPro && state.quality !== '720p') { openPaywall('quality_4k'); return; }
+  if (!state.isRecording) startRecording();
+  else stopRecording();
+});
+function startRecording() {
+  try {
+    // Экспорт пишет только выбранный фрагмент: прыгаем на его старт
+    try { audio.currentTime = state.trimStartSec; } catch (e) {}
+    const stream = stage.captureStream(60);
+    // Пытаемся подмешать звук трека, чтобы в файле была музыка
+    if (state.audioContext && state.audioContext.createMediaStreamDestination) {
+      try {
+        const dest = state.audioContext.createMediaStreamDestination();
+        state.sourceNode.connect(dest);
+        dest.stream.getAudioTracks().forEach((t) => stream.addTrack(t));
+      } catch (e) {}
+    }
+    const mime = MediaRecorder.isTypeSupported('video/webm;codecs=vp9') ? 'video/webm;codecs=vp9' : 'video/webm';
+    state.recordedChunks = [];
+    state.mediaRecorder = new MediaRecorder(stream, { mimeType: mime, videoBitsPerSecond: state.isUserPro ? 12000000 : 4000000 });
+    state.mediaRecorder.ondataavailable = (e) => { if (e.data.size) state.recordedChunks.push(e.data); };
+    state.mediaRecorder.onstop = saveRecording;
+    state.mediaRecorder.start();
+    state.isRecording = true;
+    exportBtn.textContent = '⏹ Остановить и скачать (' + (state.isUserPro ? 'без вотермарка' : 'с вотермарком') + ')';
+    if (audio.paused) audio.play().catch(() => {});
+  } catch (err) {
+    console.error(err);
+    alert('Запись не поддерживается в этом браузере. Попробуй Chrome / Edge.');
+  }
+}
+function stopRecording() {
+  if (state.mediaRecorder && state.mediaRecorder.state !== 'inactive') state.mediaRecorder.stop();
+  state.isRecording = false;
+  if (exportBtn) exportBtn.innerHTML = '⬇ Скачать видео <span class="text-cyan-300">' + (state.quality === '4k' ? '4K ↕' : state.quality) + '</span>';
+}
+function saveRecording() {
+  const blob = new Blob(state.recordedChunks, { type: 'video/webm' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = (trackTitle.textContent || 'umbrellacards') + '-' + state.quality + (state.isUserPro ? '' : '-watermarked') + '.webm';
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+}
+
+/* ---------- Жёстко зашитый вотермарк прямо на Canvas ---------- */
+function drawWatermark() {
+  // В Pro-версии вотермарк полностью отключается одним флагом
+  if (state.isUserPro) return;
+  const w = stage.width, h = stage.height;
+  ctx.save();
+  ctx.shadowBlur = 0;
+  ctx.globalAlpha = 0.55;
+  const fontSize = Math.max(12, Math.floor(w * 0.022));
+  ctx.font = '600 ' + fontSize + 'px Inter, sans-serif';
+  ctx.textAlign = 'right';
+  // Тёмная подложка-пилюля для читаемости
+  const text = BILLING.WATERMARK_TEXT;
+  const tw = ctx.measureText(text).width;
+  const pad = fontSize * 0.7;
+  const bw = tw + pad * 2.4, bh = fontSize * 2;
+  const bx = w - bw - fontSize, by = h - bh - fontSize * 0.8;
+  ctx.fillStyle = 'rgba(0,0,0,0.45)';
+  ctx.beginPath();
+  if (ctx.roundRect) ctx.roundRect(bx, by, bw, bh, bh / 2);
+  else ctx.rect(bx, by, bw, bh);
+  ctx.fill();
+  // Полупрозрачный неоновый текст
+  ctx.fillStyle = 'rgba(255,255,255,0.75)';
+  ctx.fillText('♪ ' + text, w - fontSize - pad, by + bh * 0.68);
+  ctx.restore();
+}
+
+/* ---------- Палитры: цвет полосы по позиции и громкости ---------- */
+function getBarColor(t, intensity) {
+  // t — позиция полосы от 0 до 1, intensity — громкость от 0 до 1
+  if (state.scheme === 'pastel') {
+    return 'hsl(' + Math.floor(t * 360) + ', 75%, ' + (72 + intensity * 12) + '%)';
+  }
+  if (state.scheme === 'mono') {
+    const v = Math.floor(90 + t * 40 + intensity * 120);
+    return 'rgb(' + Math.min(v, 255) + ',' + Math.min(v, 255) + ',' + Math.min(v + 8, 255) + ')';
+  }
+  // Неон по умолчанию: от циана через фиолет к мадженте и лайму
+  const hue = 185 + t * 135;
+  return 'hsl(' + Math.floor(hue) + ', 100%, ' + (52 + intensity * 18) + '%)';
+}
+
+/* ---------- Частицы-искры для режима Neon Circle (50–70 штук) ---------- */
+function initParticles() {
+  // Каждая частица вылетает из центрального круга наружу в полярных координатах
+  state.particles = [];
+  const COUNT = 64; // Середина диапазона 50–70
+  for (let i = 0; i < COUNT; i++) {
+    const angle = Math.random() * Math.PI * 2; // Случайное направление вылета
+    state.particles.push({
+      angle: angle,                            // Полярный угол
+      dist: 110 + Math.random() * 60,          // Стартовая дистанция от центра (у края круга)
+      speed: 0.35 + Math.random() * 0.75,      // Базовая медленная скорость вылета
+      boost: 0,                                // Дополнительное ускорение от удара баса (искры)
+      r: 1 + Math.random() * 2.2,              // Радиус точки
+      hue: 180 + Math.random() * 140,          // Оттенок: от бирюзы к мадженте
+      alpha: 0.4 + Math.random() * 0.6,        // Прозрачность
+      tw: Math.random() * Math.PI * 2,         // Фаза мерцания
+      decay: 0.90 + Math.random() * 0.06,      // Скорость затухания ускорения
+    });
+  }
+  // Сбрасываем историю басов, чтобы детектор удара начал с чистого листа
+  state.bassHistory = [];
+  state.bassAverage = 0;
+  state.beatPulse = 0;
+  state.isBeat = false;
+}
+
+/* ---------- Вспомогательная заливка: кинематографичный шлейф (Motion Blur) ---------- */
+function applyMotionBlur(strength) {
+  // Вместо ctx.clearRect рисуем полупрозрачный чёрный прямоугольник —
+  // предыдущий кадр слегка просвечивает и даёт красивый след за линиями
+  ctx.save();
+  ctx.globalCompositeOperation = 'source-over';
+  ctx.shadowBlur = 0; // Убираем тень, чтобы сама заливка не светилась
+  ctx.fillStyle = 'rgba(10, 10, 12, ' + strength + ')';
+  ctx.fillRect(0, 0, stage.width, stage.height);
+  ctx.restore();
+}
+
+/* ---------- Полная очистка холста (без шлейфа) ---------- */
+function hardClear() {
+  ctx.save();
+  ctx.globalCompositeOperation = 'source-over';
+  ctx.shadowBlur = 0;
+  ctx.fillStyle = '#0a0a0c';
+  ctx.fillRect(0, 0, stage.width, stage.height);
+  ctx.restore();
+}
+
+/* =====================================================================
+   ГЛАВНЫЙ ЦИКЛ: получение частот, сглаживание, детект удара, отрисовка
+   ===================================================================== */
+function getSmoothedSpectrum() {
+  if (!state.analyser) return { bass: 0, beat: false };
+  // Сырые данные спектра из Web Audio API
+  state.analyser.getByteFrequencyData(state.frequencyData);
+
+  const n = state.frequencyData.length;
+  // Плавное падение: вверх движемся быстро, вниз — медленно и органично
+  const attack = 0.55;                       // Скорость нарастания
+  const release = 0.10 + 0.06 * state.speed; // Скорость затухания зависит от скорости анимации
+  for (let i = 0; i < n; i++) {
+    const target = Math.min(255, state.frequencyData[i] * state.gain);
+    const prev = state.smoothedData[i];
+    if (target > prev) state.smoothedData[i] = prev + (target - prev) * attack;
+    else state.smoothedData[i] = prev + (target - prev) * release;
+  }
+
+  // --- Beat Detection: текущие низкие частоты (индексы 0–5) ---
+  let bassSum = 0;
+  const BASS_BINS = 6;
+  for (let i = 0; i < BASS_BINS; i++) bassSum += state.smoothedData[i];
+  const bassNow = bassSum / BASS_BINS / 255; // 0..1
+
+  // Скользящее среднее за предыдущие кадры (окно ~20 кадров)
+  state.bassHistory.push(bassNow);
+  if (state.bassHistory.length > 20) state.bassHistory.shift();
+  let avg = 0;
+  for (let i = 0; i < state.bassHistory.length; i++) avg += state.bassHistory[i];
+  avg = state.bassHistory.length ? avg / state.bassHistory.length : bassNow;
+  state.bassAverage = avg;
+
+  // Удар фиксируем, если текущий бас заметно выше среднего и громкий сам по себе
+  const isBeat = bassNow > avg * 1.25 + 0.04 && bassNow > 0.28;
+  state.isBeat = isBeat;
+  // Вспышка удара: резко ставим 1, затем плавно гасим каждый кадр
+  if (isBeat) state.beatPulse = 1;
+  else state.beatPulse *= 0.92;
+
+  // Общий уровень басов для пульсации (чуть шире окно, чтобы круг дышал музыкально)
+  const wideBins = Math.max(8, Math.floor(n * 0.03));
+  let wideSum = 0;
+  for (let i = 0; i < wideBins; i++) wideSum += state.smoothedData[i];
+  const bass = wideSum / wideBins / 255;
+
+  // --- Средние частоты (вокал, гитары): 8–30% спектра ---
+  const midStart = Math.floor(n * 0.08), midEnd = Math.floor(n * 0.30);
+  let midSum = 0;
+  for (let i = midStart; i < midEnd; i++) midSum += state.smoothedData[i];
+  const mids = midSum / Math.max(1, midEnd - midStart) / 255;
+
+  // --- Высокие частоты (тарелки, воздух): 30–65% спектра ---
+  const hiStart = Math.floor(n * 0.30), hiEnd = Math.floor(n * 0.65);
+  let hiSum = 0;
+  for (let i = hiStart; i < hiEnd; i++) hiSum += state.smoothedData[i];
+  const highs = hiSum / Math.max(1, hiEnd - hiStart) / 255;
+
+  // --- Общая громкость для shimmer-свечения текста ---
+  let allSum = 0;
+  const allEnd = Math.floor(n * 0.65);
+  for (let i = 0; i < allEnd; i++) allSum += state.smoothedData[i];
+  const volume = allSum / Math.max(1, allEnd) / 255;
+
+  return { bass: bass, beat: isBeat, mids: mids, highs: highs, volume: volume };
+}
+
+function renderLoop() {
+  requestAnimationFrame(renderLoop);
+  // Если трек ещё не загружен, рисуем спокойную заставку
+  if (!state.analyser) {
+    drawIdle();
+    return;
+  }
+  const levels = getSmoothedSpectrum();
+  state.time += 0.016 * state.speed;
+  state.angle += 0.008 * state.speed * (0.4 + levels.bass * 2.2);
+
+  // Новая концепция: Lyric Cards 9:16 вместо прыгающих палочек
+  if (window.LyricVisualizer && window.__lyricInit) {
+    LyricVisualizer.setPro(state.isUserPro);
+    LyricVisualizer.setAudioLevels({
+      bass: levels.bass, mids: levels.mids, highs: levels.highs,
+      volume: levels.volume, beat: levels.beat, beatPulse: state.beatPulse,
+    });
+    LyricVisualizer.draw(0.016 * state.speed);
+    // Вотермарк Free уже впечатан в карточку самим движком
+  } else {
+    // Fallback, пока движок не инициализирован
+    if (state.mode === 'circle') drawNeonCircle(levels.bass);
+    else if (state.mode === 'bars') drawWaveBars(levels.bass);
+    else if (state.mode === 'vinyl3d') drawVinyl3D(levels.bass);
+    else if (state.mode === 'overdrive') drawOverdrive(levels.bass);
+    else drawRetroVHS(levels.bass);
+    drawWatermark();
+  }
+
+  // Лёгкое вращение мини-винила в шапке плеера
+  const mini = document.getElementById('vinylMini');
+  if (mini) mini.style.transform = 'rotate(' + (state.angle * 40) + 'deg)';
+}
+
+/* ---------- Заставка до загрузки трека ---------- */
+function drawIdle() {
+  const w = stage.width, h = stage.height;
+  const g = ctx.createLinearGradient(0, 0, w, h);
+  g.addColorStop(0, '#070a1c');
+  g.addColorStop(1, '#12041a');
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, w, h);
+}
+drawIdle();
+requestAnimationFrame(renderLoop);
+
+/* =====================================================================
+   РЕЖИМ 1: Neon Circle — пульсирующий круг, радиальный спектр и искры
+   Современный дорогой визуал: glow, градиенты, шлейф, beat detection
+   ===================================================================== */
+function drawNeonCircle(bass) {
+  const w = stage.width, h = stage.height;
+  const cx = w / 2, cy = h / 2;
+
+  // --- 1. Очистка экрана с эффектом шлейфа (Motion Blur) ---
+  // Вместо ctx.clearRect рисуем полупрозрачный чёрный прямоугольник,
+  // предыдущий кадр слегка просвечивает и даёт кинематографичный след.
+  if (state.needsHardClear) {
+    hardClear();
+    state.needsHardClear = false;
+  } else {
+    applyMotionBlur(0.15);
+  }
+
+  // --- 2. Масштаб под плотность пикселей, чтобы круг был 100–120px как в макете ---
+  const cssW = canvasWrap.clientWidth || 800;
+  const scale = stage.width / cssW; // Множитель devicePixelRatio
+  const baseCss = 110;              // Идеальный радиус круга в CSS-пикселях
+  const baseR = baseCss * scale;
+
+  // --- 3. Центральный круг плавно пульсирует строго в такт басам (+10–15%) ---
+  // bass даёт дыхание музыки, beatPulse даёт резкий взрыв в момент удара
+  const smoothBass = Math.min(1, Math.max(0, bass));
+  const pulseAmount = smoothBass * 0.13 + state.beatPulse * 0.10;
+  const R = baseR * (1 + pulseAmount);
+
+  // Мягкое фоновое свечение, дышащее вместе с кругом
+  const halo = ctx.createRadialGradient(cx, cy, R * 0.4, cx, cy, R * 3.2);
+  halo.addColorStop(0, 'rgba(0, 242, 254, ' + (0.10 + smoothBass * 0.14 + state.beatPulse * 0.10).toFixed(3) + ')');
+  halo.addColorStop(0.5, 'rgba(124, 58, 237, ' + (0.06 + smoothBass * 0.06).toFixed(3) + ')');
+  halo.addColorStop(1, 'rgba(10, 10, 12, 0)');
+  ctx.save();
+  ctx.shadowBlur = 0;
+  ctx.fillStyle = halo;
+  ctx.fillRect(cx - R * 3.2, cy - R * 3.2, R * 6.4, R * 6.4);
+  ctx.restore();
+
+  // --- 4. Частицы-искры: медленно вылетают из круга, на ударе резко ускоряются ---
+  updateAndDrawParticles(w, h, cx, cy, R, smoothBass);
+
+  // --- 5. Неоновое свечение: обязательные настройки перед отрисовкой линий ---
+  ctx.save();
+  ctx.lineCap = 'round'; // Скруглённые концы линий
+  ctx.shadowBlur = 20;
+  ctx.shadowColor = 'rgba(0, 242, 254, 0.8)';
+
+  // Радиальные линии спектра на 360 градусов от краёв круга
+  const bars = 100;
+  const step = (Math.PI * 2) / bars;
+  const usable = Math.floor(state.smoothedData.length * 0.72); // Музыкально значимая часть спектра
+  const minDim = Math.min(w, h);
+  for (let i = 0; i < bars; i++) {
+    const bin = Math.floor((i / bars) * usable);
+    const v = Math.min(1, state.smoothedData[bin] / 255); // Громкость частоты 0..1
+    // Длина линии зависит от частоты: тихие — короткие, громкие — длинные
+    const len = scale * 6 + Math.pow(v, 1.2) * minDim * 0.20 + state.beatPulse * v * 22 * scale * 0.4;
+    const a = i * step + state.angle * 0.25;
+    const gap = 12 * scale; // Отступ от круга
+    const x1 = cx + Math.cos(a) * (R + gap);
+    const y1 = cy + Math.sin(a) * (R + gap);
+    const x2 = cx + Math.cos(a) * (R + gap + len);
+    const y2 = cy + Math.sin(a) * (R + gap + len);
+    // Градиент линии: от фиолетового у круга к ярко-бирюзовому на конце
+    const grad = ctx.createLinearGradient(x1, y1, x2, y2);
+    if (state.scheme === 'mono') {
+      const g = Math.floor(140 + v * 115);
+      grad.addColorStop(0, 'rgba(' + g + ',' + g + ',' + g + ',0.95)');
+      grad.addColorStop(1, 'rgba(255,255,255,' + (0.35 + v * 0.6).toFixed(2) + ')');
+    } else if (state.scheme === 'pastel') {
+      grad.addColorStop(0, 'rgba(196, 132, 255, 0.95)');
+      grad.addColorStop(1, 'hsla(' + Math.floor((i / bars) * 360) + ', 85%, 80%, ' + (0.4 + v * 0.6).toFixed(2) + ')');
+    } else {
+      grad.addColorStop(0, 'rgba(139, 92, 246, 0.95)'); // Фиолетовый у основания
+      grad.addColorStop(0.55, 'rgba(217, 70, 239, 0.9)');
+      grad.addColorStop(1, 'rgba(0, 242, 254, ' + (0.45 + v * 0.55).toFixed(2) + ')'); // Бирюза на конце
+    }
+    ctx.strokeStyle = grad;
+    // Толщина линии 3–4px (в CSS-пикселях), чуть толще на громких частотах
+    ctx.lineWidth = (3 + v * 1.2) * scale;
+    ctx.beginPath();
+    ctx.moveTo(x1, y1);
+    ctx.lineTo(x2, y2);
+    ctx.stroke();
+  }
+  ctx.restore();
+
+  // --- 6. Идеальный центральный круг (винил) с пульсацией ---
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.rotate(state.angle);
+  // Тело винила
+  const vinyl = ctx.createRadialGradient(0, 0, 4, 0, 0, R);
+  vinyl.addColorStop(0, '#171a2e');
+  vinyl.addColorStop(0.65, '#080913');
+  vinyl.addColorStop(1, '#000000');
+  ctx.fillStyle = vinyl;
+  ctx.shadowColor = 'rgba(0, 242, 254, 0.8)';
+  ctx.shadowBlur = 20 + smoothBass * 30 + state.beatPulse * 25;
+  ctx.beginPath();
+  ctx.arc(0, 0, R, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.shadowBlur = 0;
+  // Тонкая неоновая кромка круга
+  const rim = ctx.createLinearGradient(-R, -R, R, R);
+  if (state.scheme === 'mono') { rim.addColorStop(0, '#888'); rim.addColorStop(1, '#fff'); }
+  else { rim.addColorStop(0, '#8b5cf6'); rim.addColorStop(1, '#00f2fe'); }
+  ctx.strokeStyle = rim;
+  ctx.lineWidth = 2.5 * scale;
+  ctx.beginPath();
+  ctx.arc(0, 0, R, 0, Math.PI * 2);
+  ctx.stroke();
+  // Дорожки винила
+  ctx.strokeStyle = 'rgba(255,255,255,0.08)';
+  ctx.lineWidth = 1;
+  for (let r = R * 0.44; r < R * 0.94; r += Math.max(3, R * 0.045)) {
+    ctx.beginPath();
+    ctx.arc(0, 0, r, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+  // Блик на виниле
+  ctx.strokeStyle = 'rgba(255,255,255,0.16)';
+  ctx.lineWidth = R * 0.05;
+  ctx.beginPath();
+  ctx.arc(0, 0, R * 0.76, -0.6, 0.25);
+  ctx.stroke();
+  // Цветная этикетка в центре с градиентом фиолет -> бирюза
+  const label = ctx.createLinearGradient(-30 * scale, -30 * scale, 30 * scale, 30 * scale);
+  if (state.scheme === 'pastel') { label.addColorStop(0, '#c484ff'); label.addColorStop(1, '#7df9ff'); }
+  else if (state.scheme === 'mono') { label.addColorStop(0, '#ddd'); label.addColorStop(1, '#777'); }
+  else { label.addColorStop(0, '#8b5cf6'); label.addColorStop(1, '#00f2fe'); }
+  ctx.fillStyle = label;
+  ctx.shadowColor = 'rgba(0, 242, 254, 0.8)';
+  ctx.shadowBlur = 20;
+  ctx.beginPath();
+  ctx.arc(0, 0, R * 0.30, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.shadowBlur = 0;
+  // Отверстие шпинделя
+  ctx.fillStyle = '#0a0a0c';
+  ctx.beginPath();
+  ctx.arc(0, 0, R * 0.065, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+
+  // Название трека под кругом (рисуем поверх шлейфа каждый кадр)
+  ctx.save();
+  ctx.textAlign = 'center';
+  ctx.fillStyle = 'rgba(255,255,255,0.88)';
+  ctx.font = '600 ' + Math.floor(h * 0.034) + 'px "Space Grotesk", sans-serif';
+  ctx.shadowColor = 'rgba(0, 242, 254, 0.8)';
+  ctx.shadowBlur = 20;
+  ctx.fillText(trackTitle.textContent || 'UmbrellaCards', cx, cy + R + h * 0.07);
+  ctx.restore();
+}
+
+/* ---------- Обновление и отрисовка частиц-искр ---------- */
+function updateAndDrawParticles(w, h, cx, cy, R, bass) {
+  const cssScale = stage.width / (canvasWrap.clientWidth || 800);
+  ctx.save();
+  for (const p of state.particles) {
+    // В момент удара баса резко ускоряем частицу (эффект искр)
+    if (state.isBeat) p.boost = 4 + Math.random() * 5 + bass * 4;
+    // Плавное затухание ускорения — искра вылетает и гаснет
+    p.boost *= p.decay;
+    // Медленный вылет наружу + взрывная добавка, с учётом скорости анимации
+    const drift = p.speed * state.speed;
+    const burst = p.boost * state.speed;
+    p.dist += drift + burst;
+    p.angle += 0.0015 * state.speed; // Лёгкое закручивание
+    p.tw += 0.06 * state.speed;
+    // Когда частица улетела далеко — перерождаем у края центрального круга
+    const maxDist = Math.min(w, h) * 0.48;
+    if (p.dist > maxDist) {
+      p.dist = R + 4;
+      p.angle = Math.random() * Math.PI * 2;
+      p.boost = 0;
+    }
+    const x = cx + Math.cos(p.angle) * p.dist;
+    const y = cy + Math.sin(p.angle) * p.dist;
+    // Размер растёт от ускорения, затем возвращается к малому
+    const size = (p.r + p.boost * 0.55) * cssScale * (1 + bass * 0.4);
+    const fade = Math.max(0, 1 - p.dist / maxDist); // Дальние частицы бледнее
+    const alpha = Math.min(1, (p.alpha * (0.35 + fade * 0.65) + state.beatPulse * 0.3));
+    let color;
+    if (state.scheme === 'mono') color = 'rgba(255,255,255,' + alpha.toFixed(2) + ')';
+    else if (state.scheme === 'pastel') color = 'hsla(' + Math.floor(p.hue) + ', 85%, 82%, ' + alpha.toFixed(2) + ')';
+    else color = 'hsla(' + Math.floor(p.hue) + ', 100%, 68%, ' + alpha.toFixed(2) + ')';
+    ctx.fillStyle = color;
+    // Неоновое свечение каждой искры
+    ctx.shadowColor = state.scheme === 'mono' ? 'rgba(255,255,255,0.8)' : 'rgba(0, 242, 254, 0.8)';
+    ctx.shadowBlur = 20;
+    ctx.beginPath();
+    ctx.arc(x, y, Math.max(0.6, size), 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.restore();
+}
+
+/* =====================================================================
+   РЕЖИМ 2: Waveform Bars — плавная горизонтальная волна
+   ===================================================================== */
+function drawWaveBars(bass) {
+  const w = stage.width, h = stage.height;
+
+  // Тёмный фон с мягким градиентом
+  const bg = ctx.createLinearGradient(0, 0, 0, h);
+  bg.addColorStop(0, '#060816');
+  bg.addColorStop(0.5, '#0a0620');
+  bg.addColorStop(1, '#05060f');
+  ctx.fillStyle = bg;
+  ctx.fillRect(0, 0, w, h);
+
+  // Лёгкая сетка по центру для глубины
+  ctx.strokeStyle = 'rgba(255,255,255,0.05)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(0, h / 2);
+  ctx.lineTo(w, h / 2);
+  ctx.stroke();
+
+  const bars = 72;                       // Количество полос
+  const gap = w / bars;
+  const barW = Math.max(3, gap * 0.52);
+  const usable = Math.floor(state.smoothedData.length * 0.65);
+  const maxH = h * 0.42;
+
+  ctx.save();
+  for (let i = 0; i < bars; i++) {
+    // Берём частоту и зеркалим края для симметрии волны
+    const t = i / (bars - 1);
+    const mirrored = t < 0.5 ? t * 2 : (1 - t) * 2;
+    const bin = Math.floor(mirrored * (usable - 1));
+    const v = state.smoothedData[bin] / 255;
+    // Плавная высота с минимумом, чтобы волна никогда не схлопывалась в ноль
+    const bh = 8 + Math.pow(v, 1.25) * maxH;
+    const x = i * gap + (gap - barW) / 2;
+    const y = h / 2 - bh / 2;
+    ctx.fillStyle = getBarColor(t, v);
+    ctx.shadowColor = ctx.fillStyle;
+    ctx.shadowBlur = 16 + v * 22;
+    // Закруглённые полосы со свечением
+    roundRect(x, y, barW, bh, barW / 2);
+    ctx.fill();
+    // Зеркальное отражение под волной
+    ctx.globalAlpha = 0.22;
+    roundRect(x, h / 2 + bh / 2 + 6, barW, bh * 0.45, barW / 2);
+    ctx.fill();
+    ctx.globalAlpha = 1;
+  }
+  ctx.restore();
+
+  // Бегущая световая линия поверх волны
+  ctx.save();
+  const glowY = h / 2 + Math.sin(state.time * 2.2) * h * 0.02 - bass * h * 0.03;
+  const line = ctx.createLinearGradient(0, 0, w, 0);
+  line.addColorStop(0, 'transparent');
+  line.addColorStop(0.5, state.scheme === 'mono' ? 'rgba(255,255,255,.8)' : 'rgba(0,240,255,.7)');
+  line.addColorStop(1, 'transparent');
+  ctx.strokeStyle = line;
+  ctx.lineWidth = 2;
+  ctx.shadowBlur = 18;
+  ctx.shadowColor = 'rgba(0,240,255,.8)';
+  ctx.beginPath();
+  ctx.moveTo(0, glowY);
+  ctx.lineTo(w, glowY);
+  ctx.stroke();
+  ctx.restore();
+}
+
+/* ---------- Вспомогательная функция закруглённого прямоугольника ---------- */
+function roundRect(x, y, width, height, radius) {
+  const r = Math.min(radius, width / 2, height / 2);
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + width, y, x + width, y + height, r);
+  ctx.arcTo(x + width, y + height, x, y + height, r);
+  ctx.arcTo(x, y + height, x, y, r);
+  ctx.arcTo(x, y, x + width, y, r);
+  ctx.closePath();
+}
+
+/* =====================================================================
+   РЕЖИМ 3: Retro VHS — эквалайзер, глитч, шум и сканлайны
+   ===================================================================== */
+function drawRetroVHS(bass) {
+  const w = stage.width, h = stage.height;
+
+  // Тёмно-синий фон кассеты
+  ctx.fillStyle = '#070712';
+  ctx.fillRect(0, 0, w, h);
+
+  const bars = 48;
+  const gap = w / bars;
+  const barW = gap * 0.58;
+  const usable = Math.floor(state.smoothedData.length * 0.6);
+
+  // Хроматическая аберрация: рисуем три смещённых слоя (красный, зелёный, синий)
+  const layers = [
+    { dx: -3 - bass * 8, color: 'rgba(255,0,80,0.55)' },
+    { dx: 0, color: null }, // Основной белый слой
+    { dx: 3 + bass * 8, color: 'rgba(0,240,255,0.55)' },
+  ];
+  for (const layer of layers) {
+    ctx.save();
+    ctx.translate(layer.dx, 0);
+    for (let i = 0; i < bars; i++) {
+      const bin = Math.floor((i / bars) * usable);
+      const v = state.smoothedData[bin] / 255;
+      // Прыгающий эквалайзер: добавляем лёгкий джиттер
+      const jitter = (Math.random() - 0.5) * 6 * (0.4 + bass);
+      const bh = 10 + v * h * 0.62 + jitter;
+      const x = i * gap + (gap - barW) / 2;
+      const y = h - bh - h * 0.12;
+      if (layer.color) {
+        ctx.fillStyle = layer.color;
+      } else {
+        // Основной слой красится по схеме
+        ctx.fillStyle = state.scheme === 'mono' ? 'rgba(255,255,255,0.92)' : getBarColor(i / bars, v);
+        ctx.shadowColor = ctx.fillStyle;
+        ctx.shadowBlur = 14;
+      }
+      ctx.fillRect(x, y, barW, bh);
+    }
+    ctx.restore();
+  }
+  ctx.shadowBlur = 0;
+
+  // Глитч-срезы: случайно сдвигаем горизонтальные полосы, сильнее на басах
+  if (Math.random() < 0.25 + bass * 0.6) {
+    const slices = 1 + Math.floor(Math.random() * 3 + bass * 3);
+    for (let s = 0; s < slices; s++) {
+      const sy = Math.random() * h;
+      const sh = 6 + Math.random() * 26;
+      const dx = (Math.random() - 0.5) * (30 + bass * 90);
+      // Копируем полосу самого холста со сдвигом — классический VHS-трекинг
+      ctx.drawImage(stage, 0, sy, w, sh, dx, sy, w, sh);
+      // Цветная помеха на срезе
+      ctx.fillStyle = 'rgba(0,240,255,0.08)';
+      ctx.fillRect(0, sy, w, sh);
+    }
+  }
+
+  // Плёночный шум: случайные светлые точки
+  ctx.save();
+  const dots = Math.floor(120 + bass * 220);
+  for (let i = 0; i < dots; i++) {
+    const x = Math.random() * w, y = Math.random() * h;
+    ctx.fillStyle = 'rgba(255,255,255,' + (Math.random() * 0.16).toFixed(2) + ')';
+    ctx.fillRect(x, y, 1.5, 1.5);
+  }
+  ctx.restore();
+
+  // Сканлайны старой кассеты
+  ctx.fillStyle = 'rgba(0,0,0,0.22)';
+  for (let y = 0; y < h; y += 4) ctx.fillRect(0, y, w, 1);
+
+  // Виньетка по краям
+  const vig = ctx.createRadialGradient(w/2, h/2, Math.min(w,h)*0.35, w/2, h/2, Math.max(w,h)*0.75);
+  vig.addColorStop(0, 'rgba(0,0,0,0)');
+  vig.addColorStop(1, 'rgba(0,0,0,0.55)');
+  ctx.fillStyle = vig;
+  ctx.fillRect(0, 0, w, h);
+
+  // Экранное меню кассеты: PLAY, время и дорожка
+  ctx.save();
+  ctx.fillStyle = 'rgba(255,255,255,0.92)';
+  ctx.font = '600 ' + Math.floor(h * 0.038) + 'px monospace';
+  ctx.textAlign = 'left';
+  ctx.fillText('▶ PLAY', w * 0.04, h * 0.10);
+  ctx.textAlign = 'right';
+  ctx.fillText('SP ' + formatTime(audio.currentTime || 0), w * 0.96, h * 0.10);
+  ctx.fillStyle = '#ff3355';
+  ctx.textAlign = 'left';
+  if (Math.floor(state.time * 2) % 2 === 0) ctx.fillText('● REC', w * 0.04, h * 0.17);
+  ctx.fillStyle = 'rgba(255,255,255,0.55)';
+  ctx.font = Math.floor(h * 0.03) + 'px monospace';
+  ctx.textAlign = 'center';
+  ctx.fillText('HI-FI STEREO · ' + (trackTitle.textContent || 'UMBRELLACARDS'), w / 2, h * 0.94);
+  // Бегущая строка трекинга внизу
+  ctx.fillStyle = 'rgba(255,255,255,0.10)';
+  ctx.fillRect(0, h * 0.88 + Math.sin(state.time * 3) * 4, w, 3);
+  ctx.restore();
+}
+
+/* =====================================================================
+   PRO-ПРЕСЕТ 1: 3D-Vinyl — объёмный винил с глубокими тенями (только Pro)
+   ===================================================================== */
+function drawVinyl3D(bass) {
+  const w = stage.width, h = stage.height;
+  const cx = w / 2, cy = h / 2;
+  if (state.needsHardClear) { hardClear(); state.needsHardClear = false; }
+  else applyMotionBlur(0.12);
+  const scale = stage.width / (canvasWrap.clientWidth || 800);
+  const R = 105 * scale * (1 + Math.min(1, bass) * 0.12 + state.beatPulse * 0.08);
+
+  // Сцена: градиентный пол и глубокая тень под диском
+  const bg = ctx.createLinearGradient(0, 0, 0, h);
+  bg.addColorStop(0, '#0a0a14'); bg.addColorStop(0.6, '#0d0718'); bg.addColorStop(1, '#050508');
+  ctx.save(); ctx.shadowBlur = 0; ctx.fillStyle = bg; ctx.fillRect(0, 0, w, h); ctx.restore();
+  ctx.save();
+  ctx.fillStyle = 'rgba(0,0,0,0.6)';
+  ctx.shadowColor = 'rgba(0,0,0,0.9)'; ctx.shadowBlur = 60 * scale;
+  ctx.beginPath();
+  ctx.ellipse(cx, cy + R * 1.25, R * 1.15, R * 0.22, 0, 0, Math.PI * 2);
+  ctx.fill(); ctx.restore();
+
+  // Стопка из 3 дисков со сдвигом для псевдо-3D глубины
+  for (let layer = 2; layer >= 0; layer--) {
+    const offY = layer * 10 * scale;
+    const rr = R - layer * 3 * scale;
+    ctx.save();
+    ctx.translate(cx, cy - offY * 0.4);
+    ctx.rotate(state.angle * (layer === 0 ? 1 : 0.3));
+    const g = ctx.createRadialGradient(-rr * 0.3, -rr * 0.3, 10, 0, 0, rr);
+    g.addColorStop(0, '#1c2036'); g.addColorStop(0.6, '#0a0b16'); g.addColorStop(1, '#000');
+    ctx.fillStyle = g;
+    ctx.shadowColor = layer === 0 ? 'rgba(0, 242, 254, 0.8)' : 'rgba(0,0,0,0.8)';
+    ctx.shadowBlur = layer === 0 ? 20 + bass * 30 : 25;
+    ctx.beginPath(); ctx.arc(0, 0, rr, 0, Math.PI * 2); ctx.fill();
+    ctx.shadowBlur = 0;
+    ctx.strokeStyle = layer === 0 ? '#00f2fe' : 'rgba(255,255,255,0.10)';
+    ctx.lineWidth = (layer === 0 ? 2.5 : 1.5) * scale;
+    ctx.beginPath(); ctx.arc(0, 0, rr, 0, Math.PI * 2); ctx.stroke();
+    if (layer === 0) {
+      ctx.strokeStyle = 'rgba(255,255,255,0.10)';
+      for (let r = rr * 0.45; r < rr * 0.92; r += rr * 0.05) {
+        ctx.beginPath(); ctx.arc(0, 0, r, 0, Math.PI * 2); ctx.stroke();
+      }
+      const label = ctx.createLinearGradient(-30, -30, 30, 30);
+      label.addColorStop(0, '#8b5cf6'); label.addColorStop(1, '#00f2fe');
+      ctx.fillStyle = label;
+      ctx.shadowColor = 'rgba(0, 242, 254, 0.8)'; ctx.shadowBlur = 20;
+      ctx.beginPath(); ctx.arc(0, 0, rr * 0.30, 0, Math.PI * 2); ctx.fill();
+    }
+    ctx.restore();
+  }
+  // Спектральное кольцо вокруг с глубокой тенью
+  ctx.save();
+  ctx.lineCap = 'round'; ctx.shadowBlur = 20; ctx.shadowColor = 'rgba(0, 242, 254, 0.8)';
+  const bars = 90, usable = Math.floor(state.smoothedData.length * 0.7);
+  for (let i = 0; i < bars; i++) {
+    const v = Math.min(1, state.smoothedData[Math.floor(i / bars * usable)] / 255);
+    const a = (i / bars) * Math.PI * 2 + state.angle * 0.3;
+    const len = 8 * scale + v * Math.min(w, h) * 0.16;
+    const x1 = cx + Math.cos(a) * (R + 16 * scale), y1 = cy + Math.sin(a) * (R + 16 * scale);
+    const x2 = cx + Math.cos(a) * (R + 16 * scale + len), y2 = cy + Math.sin(a) * (R + 16 * scale + len);
+    const gr = ctx.createLinearGradient(x1, y1, x2, y2);
+    gr.addColorStop(0, '#8b5cf6'); gr.addColorStop(1, 'rgba(0, 242, 254,' + (0.4 + v * 0.6) + ')');
+    ctx.strokeStyle = gr; ctx.lineWidth = 3.5 * scale;
+    ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+  }
+  ctx.restore();
+  ctx.save();
+  ctx.textAlign = 'center'; ctx.fillStyle = 'rgba(255,255,255,0.85)';
+  ctx.font = '700 ' + Math.floor(h * 0.032) + 'px "Space Grotesk", sans-serif';
+  ctx.shadowColor = 'rgba(0, 242, 254, 0.8)'; ctx.shadowBlur = 20;
+  ctx.fillText('★ 3D-VINYL PRO · ' + (trackTitle.textContent || 'UmbrellaCards'), cx, cy + R + h * 0.10);
+  ctx.restore();
+}
+
+/* =====================================================================
+   PRO-ПРЕСЕТ 2: Cyberpunk Overdrive — утроенные частицы + глитч (только Pro)
+   ===================================================================== */
+function drawOverdrive(bass) {
+  const w = stage.width, h = stage.height;
+  const cx = w / 2, cy = h / 2;
+  if (state.needsHardClear) { hardClear(); state.needsHardClear = false; }
+  else applyMotionBlur(0.10); // Короткий шлейф = ощущение скорости
+  const scale = stage.width / (canvasWrap.clientWidth || 800);
+  const R = 92 * scale * (1 + Math.min(1, bass) * 0.15 + state.beatPulse * 0.12);
+
+  // Фон: неоновый город — вертикальные лучи
+  ctx.save(); ctx.shadowBlur = 0;
+  ctx.fillStyle = 'rgba(8,4,20,0.9)'; ctx.fillRect(0, 0, w, h);
+  for (let i = 0; i < 24; i++) {
+    const bx = (i / 24) * w + Math.sin(state.time * 2 + i) * 8;
+    const v = state.smoothedData[Math.floor(i / 24 * state.smoothedData.length * 0.5)] / 255;
+    const gr = ctx.createLinearGradient(0, h, 0, h * 0.3);
+    gr.addColorStop(0, 'rgba(255,0,229,' + (0.05 + v * 0.25) + ')');
+    gr.addColorStop(1, 'transparent');
+    ctx.fillStyle = gr;
+    ctx.fillRect(bx, h * 0.3, w / 40, h * 0.7);
+  }
+  ctx.restore();
+
+  // Утроенные частицы: рисуем обычный рой 3 раза со сдвигом (хроматика)
+  const passes = [
+    { dx: -4 * scale, color: 'rgba(255,0,120,0.7)' },
+    { dx: 0, color: null },
+    { dx: 4 * scale, color: 'rgba(0,242,254,0.7)' },
+  ];
+  for (const p of passes) {
+    ctx.save(); ctx.translate(p.dx, 0);
+    updateAndDrawParticles(w, h, cx, cy, R, Math.min(1, bass * 1.3));
+    ctx.restore();
+  }
+  // Дополнительный рой искр поверх (ещё ~120 точек для плотности Overdrive)
+  ctx.save();
+  ctx.shadowBlur = 20; ctx.shadowColor = 'rgba(0, 242, 254, 0.8)';
+  for (let i = 0; i < 120; i++) {
+    const a = Math.random() * Math.PI * 2;
+    const d = R + Math.random() * Math.min(w, h) * 0.4;
+    const x = cx + Math.cos(a) * d + (Math.random() - 0.5) * 30 * state.beatPulse;
+    const y = cy + Math.sin(a) * d;
+    ctx.fillStyle = i % 3 === 0 ? 'rgba(255,0,229,0.8)' : 'rgba(0,242,254,0.8)';
+    ctx.beginPath(); ctx.arc(x, y, (1 + Math.random() * 2) * scale, 0, 7); ctx.fill();
+  }
+  ctx.restore();
+
+  // Ядро-реактор по центру
+  ctx.save();
+  const core = ctx.createRadialGradient(cx, cy, 2, cx, cy, R);
+  core.addColorStop(0, '#fff'); core.addColorStop(0.25, '#00f2fe');
+  core.addColorStop(0.6, '#8b5cf6'); core.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = core;
+  ctx.shadowColor = 'rgba(0, 242, 254, 0.9)'; ctx.shadowBlur = 30;
+  ctx.beginPath(); ctx.arc(cx, cy, R, 0, Math.PI * 2); ctx.fill();
+  ctx.restore();
+
+  // Сильный глитч на ударе баса
+  if (state.isBeat || Math.random() < 0.3 + bass * 0.4) {
+    const sy = Math.random() * h, sh = 8 + Math.random() * 30;
+    const dx = (Math.random() - 0.5) * (60 + bass * 120);
+    try { ctx.drawImage(stage, 0, sy, w, sh, dx, sy, w, sh); } catch (e) {}
+    ctx.fillStyle = 'rgba(255,0,229,0.10)'; ctx.fillRect(0, sy, w, sh);
+    ctx.fillStyle = 'rgba(0,242,254,0.10)'; ctx.fillRect(0, sy + sh * 0.4, w, 2);
+  }
+  ctx.save();
+  ctx.textAlign = 'center'; ctx.fillStyle = '#fff';
+  ctx.font = '800 ' + Math.floor(h * 0.036) + 'px "Space Grotesk", sans-serif';
+  ctx.shadowColor = '#ff00e5'; ctx.shadowBlur = 22;
+  ctx.fillText('OVERDRIVE ⚡ PRO', cx, cy + R + h * 0.10);
+  ctx.restore();
+}
+</script>
+</body>
+</html>
